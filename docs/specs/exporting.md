@@ -9,7 +9,6 @@ Core commands:
 ```bash
 designmd lint DESIGN.md
 designmd lint --strict DESIGN.md
-designmd diff before.md after.md
 designmd export --format css DESIGN.md
 designmd export --format css-tailwind DESIGN.md
 designmd export --format css --out custom-tokens.css DESIGN.md
@@ -28,7 +27,6 @@ The preferred library API is functional:
 parseDesignMd(source)
 lintDesignMd(source)
 exportDesignMd(source, { format: "css" })
-diffDesignMd(before, after)
 ```
 
 Exact TypeScript interfaces are implementation details until the parser and linter stabilize.
@@ -146,7 +144,7 @@ Theme overrides emit normal CSS variables under `[data-theme="..."]` selectors.
 
 ## Components and iconography
 
-Components are not exported to CSS by default. They are structured guidance for agents, linting, and diffing.
+Components are not exported to CSS by default. They are structured guidance for agents and linting.
 
 Iconography exports only CSS-like values such as size, stroke width, and color. `library` and `style` guide implementation and code generation; they do not install packages or generate SVGs.
 
@@ -158,18 +156,32 @@ Unknown keys in known sections are preserved in the parsed design system and ski
 
 `designmd migrate` converts legacy frontmatter-based DESIGN.md files into section-local token fences.
 
-Default behavior writes converted Markdown to stdout. `--write` may update the input file in place.
+Default behavior writes converted Markdown to stdout. `--write` updates the input file in place.
 
-Migration preserves existing prose where possible and injects tokens into matching canonical sections. Missing required sections are created with placeholder prose.
+Migration preserves existing prose where possible and injects tokens into matching canonical sections. It does not invent missing design prose. If the legacy file lacks required sections or required token fields, run `designmd lint` on the migrated file and complete the remaining gaps manually.
 
 Legacy mapping:
 
 - `colors` -> `## Colors`
-- `typography` -> `## Typography` under `text`
+- `typography` -> `## Typography` under `text`; `baseFontSize` is derived from `body`, `body-md`, or the first text style font size when available
 - `spacing` -> `## Layout` under `spacing`
 - `rounded` -> `## Shapes` under `radius`
 - `components` -> `## Components`
 
-Legacy flat components are preserved as flat maps and produce warnings under the new linter. Migration does not infer variants.
+Legacy section aliases are canonicalized where possible:
 
-The migration parser accepts a looser simple legacy YAML subset, including unquoted scalar strings. It outputs strict DESIGN.md Token YAML with double-quoted strings.
+- `Brand & Style` -> `Overview`
+- `Layout & Spacing` -> `Layout`
+- `Elevation & Depth` -> `Elevation`
+
+Legacy component maps are wrapped in `base`. The old `rounded` component property is renamed to `radius`. Migration does not infer variants.
+
+Legacy references are rewritten when their target path moved:
+
+- `{spacing.*}` -> `{layout.spacing.*}`
+- `{rounded.*}` -> `{shapes.radius.*}`
+- `{typography.*}` -> `{typography.text.*}`
+
+Unknown legacy root keys are skipped with warnings.
+
+The migration parser accepts a looser simple legacy YAML subset: maps, nested maps, numbers, double-quoted strings, and simple unquoted strings. It does not support lists, comments, anchors, aliases, tags, flow collections, or block scalars. It outputs strict DESIGN.md Token YAML with double-quoted strings.

@@ -1,6 +1,6 @@
 import type { DesignMdExportFormat } from "../core/export/css.js";
 
-export type CliCommand = ExportCommand | HelpCommand | LintCommand | UsageErrorCommand | VersionCommand;
+export type CliCommand = ExportCommand | HelpCommand | LintCommand | MigrateCommand | UsageErrorCommand | VersionCommand;
 
 export interface HelpCommand {
   kind: "help";
@@ -29,6 +29,12 @@ export interface ExportCommand {
   force: boolean;
 }
 
+export interface MigrateCommand {
+  kind: "migrate";
+  filePath: string;
+  write: boolean;
+}
+
 export function parseCliArgs(args: readonly string[]): CliCommand {
   const [command, ...rest] = args;
 
@@ -48,10 +54,48 @@ export function parseCliArgs(args: readonly string[]): CliCommand {
     return parseExportArgs(rest);
   }
 
+  if (command === "migrate") {
+    return parseMigrateArgs(rest);
+  }
+
   return {
     kind: "usage-error",
     message: `Unknown command '${command}'.`,
   };
+}
+
+function parseMigrateArgs(args: readonly string[]): CliCommand {
+  let write = false;
+  const filePaths: string[] = [];
+
+  for (const arg of args) {
+    if (arg === "--write") {
+      write = true;
+      continue;
+    }
+
+    if (arg === "--help" || arg === "-h") {
+      return { kind: "help" };
+    }
+
+    if (arg.startsWith("-")) {
+      return {
+        kind: "usage-error",
+        message: `Unknown migrate option '${arg}'.`,
+      };
+    }
+
+    filePaths.push(arg);
+  }
+
+  if (filePaths.length !== 1) {
+    return {
+      kind: "usage-error",
+      message: "migrate requires exactly one legacy DESIGN.md file path.",
+    };
+  }
+
+  return { kind: "migrate", filePath: filePaths[0] ?? "", write };
 }
 
 function parseLintArgs(args: readonly string[]): CliCommand {
@@ -193,17 +237,20 @@ export function helpText(): string {
 Usage:
   designmd lint [--strict] <file>
   designmd export --format css|css-tailwind [--out <file>] [--force] <file>
+  designmd migrate [--write] <file>
   designmd --help
   designmd --version
 
 Commands:
   lint      Validate a DESIGN.md file
   export    Export DESIGN.md tokens to CSS files
+  migrate   Convert legacy frontmatter DESIGN.md files
 
 Options:
   --strict        Treat warnings as lint failures
   --format        Export format: css or css-tailwind
   --out <file>    Override export output path
   --force         Overwrite existing export output
+  --write         Update the migrated input file in place
 `;
 }

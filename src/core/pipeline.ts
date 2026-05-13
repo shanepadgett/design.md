@@ -13,6 +13,11 @@ import type { ParsedSectionToken } from "./sections/tokens.js";
 import { parseTokenYaml } from "./token-yaml/parse-token-yaml.js";
 import { validateDocumentStructure } from "./validation/document-structure.js";
 import { validateSectionSchemas } from "./validation/section-schemas.js";
+export type {
+  DesignMdMigrateOptions,
+  DesignMdMigrateResult,
+} from "./migrate/types.js";
+export { migrateDesignMd } from "./migrate/migrate-design-md.js";
 
 export interface DesignMdOptions {
   filePath?: string;

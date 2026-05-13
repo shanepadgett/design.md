@@ -4,10 +4,12 @@ export type {
   DesignMdLintOptions,
   DesignMdLintResult,
   DesignMdLintSummary,
+  DesignMdMigrateOptions,
+  DesignMdMigrateResult,
   DesignMdOptions,
   DesignMdParseResult,
 } from "./core/pipeline.js";
-export { exportDesignMd, lintDesignMd, parseDesignMd } from "./core/pipeline.js";
+export { exportDesignMd, lintDesignMd, migrateDesignMd, parseDesignMd } from "./core/pipeline.js";
 
 export type { DesignMdExportFormat } from "./core/export/css.js";
 

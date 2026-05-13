@@ -151,3 +151,54 @@ test("CLI export exits 1 for blocking diagnostics and writes no file", async () 
   assert.match(output.stderr, /error invalid-color Colors\.primary:/);
   assert.equal(output.writtenFiles["design-tokens.css"], undefined);
 });
+
+const legacyDesignMd = `---
+name: Legacy CLI
+description: Converted by CLI.
+colors:
+  primary: "#075985"
+typography:
+  body:
+    fontFamily: Inter
+    fontSize: 16px
+    lineHeight: "1.5"
+spacing:
+  md: 16px
+rounded:
+  md: 8px
+---
+`;
+
+test("CLI migrate writes converted document to stdout by default", async () => {
+  const harness = createIo({ "legacy.md": legacyDesignMd });
+
+  const exitCode = await runCli(["migrate", "legacy.md"], harness.io);
+  const output = harness.output();
+
+  assert.equal(exitCode, 0);
+  assert.match(output.stdout, /^# Legacy CLI\n/);
+  assert.match(output.stdout, /## Colors[\s\S]*primary: "#075985"/);
+  assert.deepEqual(output.writtenFiles, {});
+});
+
+test("CLI migrate --write updates the input file", async () => {
+  const harness = createIo({ "legacy.md": legacyDesignMd });
+
+  const exitCode = await runCli(["migrate", "--write", "legacy.md"], harness.io);
+  const output = harness.output();
+
+  assert.equal(exitCode, 0);
+  assert.match(output.stdout, /wrote legacy\.md/);
+  assert.match(output.writtenFiles["legacy.md"], /^# Legacy CLI\n/);
+});
+
+test("CLI migrate exits 1 for non-legacy input", async () => {
+  const harness = createIo({ "DESIGN.md": validDesignMd });
+
+  const exitCode = await runCli(["migrate", "DESIGN.md"], harness.io);
+  const output = harness.output();
+
+  assert.equal(exitCode, 1);
+  assert.match(output.stderr, /error legacy-frontmatter/);
+  assert.deepEqual(output.writtenFiles, {});
+});

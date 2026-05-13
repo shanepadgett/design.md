@@ -1,6 +1,7 @@
 import { helpText, parseCliArgs } from "./args.js";
 import { runExportCommand } from "./commands/export.js";
 import { runLintCommand } from "./commands/lint.js";
+import { runMigrateCommand } from "./commands/migrate.js";
 import type { CommandIO } from "./io.js";
 
 const cliVersion = "0.0.0";
@@ -24,5 +25,7 @@ export async function runCli(args: readonly string[], io: CliIO): Promise<number
       return runLintCommand(command, io);
     case "export":
       return runExportCommand(command, io);
+    case "migrate":
+      return runMigrateCommand(command, io);
   }
 }

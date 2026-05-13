@@ -38,34 +38,24 @@ Likely path:
 
 Direct Figma plugin work is deferred.
 
-## Diff command
+## Deferred diff command
 
-Add `designmd diff` after linting and export are stable.
+Consider `designmd diff` only if a clear agent, CI, or review workflow needs semantic DESIGN.md change summaries beyond Git diff.
 
-Likely behavior:
+Current stance: deferred. Git already handles text changes, so a diff command needs stronger value than reformatting line diffs.
+
+Possible useful behavior:
 
 - compare two DESIGN.md files
 - report added, removed, and modified token paths
 - report added, removed, and modified prose sections by normalized text
 - fail only when the after file has more lint errors than the before file
 
-## Identity-based examples
+Do not implement until one of these concrete uses exists:
 
-Create an `examples/` folder with three realistic identity-based DESIGN.md files.
-
-Examples should not be generic schema fixtures. Each should express a strong visual identity and show how prose and tokens work together.
-
-The three examples should collectively cover:
-
-- light/dark themes
-- nested color scales
-- structured components
-- iconography
-- motion
-- flat elevation and shadow-based elevation
-- varied typography and shape language
-
-Specific identities are undecided.
+- an agent needs a compact semantic summary after editing
+- CI needs to comment token-level changes on pull requests
+- generated exports need change summaries without committing generated files
 
 ## Component CSS export
 
