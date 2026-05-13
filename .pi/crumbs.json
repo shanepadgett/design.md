@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../personal/crumbs/schemas/crumbs.schema.json",
+  "extensions": {
+    "caveman": {
+      "enabled": true,
+      "powers": [
+        "typescript"
+      ]
+    },
+    "quietMarkdownlint": {
+      "excludeGlobs": [
+        "external/**",
+        "docs/_hidden/**"
+      ]
+    }
+  }
+}
