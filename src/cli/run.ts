@@ -1,10 +1,13 @@
+import { createRequire } from "node:module";
 import { helpText, parseCliArgs } from "./args.js";
 import { runExportCommand } from "./commands/export.js";
 import { runLintCommand } from "./commands/lint.js";
 import { runMigrateCommand } from "./commands/migrate.js";
 import type { CommandIO } from "./io.js";
 
-const cliVersion = "0.0.0";
+const require = createRequire(import.meta.url);
+const packageJson = require("../../package.json") as { version: string };
+const cliVersion = packageJson.version;
 
 export type CliIO = CommandIO;
 

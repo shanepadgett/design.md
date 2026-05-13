@@ -1,7 +1,21 @@
 {
-  "name": "design.md",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@shanepadgett/design.md",
+  "version": "0.1.0",
+  "description": "CLI and library for design documents with structured tokens.",
+  "keywords": [
+    "cli",
+    "design",
+    "design-systems",
+    "markdown",
+    "tokens"
+  ],
+  "homepage": "https://github.com/shanepadgett/design.md#readme",
+  "license": "MIT",
+  "author": "Shane Padgett",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shanepadgett/design.md.git"
+  },
   "bin": {
     "designmd": "./dist/cli/main.js"
   },
@@ -16,6 +30,9 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "node ./node_modules/typescript/bin/tsc -p tsconfig.build.json",

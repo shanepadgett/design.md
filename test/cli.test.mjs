@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
+import { createRequire } from "node:module";
 import test from "node:test";
 import { runCli } from "../dist/cli/run.js";
 import { validDesignMd } from "./fixtures.mjs";
+
+const require = createRequire(import.meta.url);
+const packageJson = require("../package.json");
 
 function createIo(files, existingFiles = {}) {
   let stdout = "";
@@ -97,6 +101,17 @@ test("CLI exits 2 for read failures and usage errors", async () => {
   const usage = createIo({});
   assert.equal(await runCli(["lint"], usage.io), 2);
   assert.match(usage.output().stderr, /lint requires exactly one DESIGN\.md file path/);
+});
+
+test("CLI prints package version", async () => {
+  const harness = createIo({});
+
+  const exitCode = await runCli(["--version"], harness.io);
+  const output = harness.output();
+
+  assert.equal(exitCode, 0);
+  assert.equal(output.stdout, `${packageJson.version}\n`);
+  assert.equal(output.stderr, "");
 });
 
 test("CLI export writes default css output next to input file", async () => {
