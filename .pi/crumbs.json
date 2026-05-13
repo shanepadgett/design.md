@@ -4,6 +4,7 @@
     "caveman": {
       "enabled": true,
       "powers": [
+        "architecture",
         "typescript"
       ]
     },
