@@ -67,20 +67,25 @@ test("migrate converts legacy frontmatter into section token fences", () => {
 });
 
 test("migrate uses description when Overview prose is missing", () => {
-  const result = migrateDesignMd(`---
+  const result = migrateDesignMd(
+    `---
 name: Minimal
 description: Converted overview.
 colors:
   primary: "#000000"
 ---
-`, { filePath: "legacy.md" });
+`,
+    { filePath: "legacy.md" },
+  );
 
   assert.equal(result.valid, true);
   assert.match(result.output, /## Overview\n\nConverted overview\./);
 });
 
 test("migrate rejects files without legacy frontmatter", () => {
-  const result = migrateDesignMd("# Already New\n\n## Overview\n\nDone.\n", { filePath: "DESIGN.md" });
+  const result = migrateDesignMd("# Already New\n\n## Overview\n\nDone.\n", {
+    filePath: "DESIGN.md",
+  });
 
   assert.equal(result.valid, false);
   assert.equal(result.output, undefined);
@@ -88,12 +93,15 @@ test("migrate rejects files without legacy frontmatter", () => {
 });
 
 test("migrate rejects unsupported legacy YAML features", () => {
-  const result = migrateDesignMd(`---
+  const result = migrateDesignMd(
+    `---
 name: Bad
 colors:
   - primary
 ---
-`, { filePath: "legacy.md" });
+`,
+    { filePath: "legacy.md" },
+  );
 
   assert.equal(result.valid, false);
   assert.equal(result.output, undefined);

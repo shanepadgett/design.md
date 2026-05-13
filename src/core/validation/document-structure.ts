@@ -17,13 +17,11 @@ export interface DocumentStructureValidation {
   tokenFences: SectionTokenFence[];
 }
 
-export function validateDocumentStructure(
-  document: DesignDocument,
-): DocumentStructureValidation {
+export function validateDocumentStructure(document: DesignDocument): DocumentStructureValidation {
   const diagnostics: Diagnostic[] = [];
   const tokenFences: SectionTokenFence[] = [];
-  const knownSections = document.sections.filter((section) =>
-    getSectionDefinition(section.name) !== undefined
+  const knownSections = document.sections.filter(
+    (section) => getSectionDefinition(section.name) !== undefined,
   );
 
   validateRequiredSections(document, diagnostics);
@@ -41,10 +39,7 @@ export function validateDocumentStructure(
     const firstYamlFence = yamlFences[0];
 
     if (definition.proseRequired) {
-      const hasProse = sectionHasProseBeforeLine(
-        section,
-        firstYamlFence?.openingLine.number,
-      );
+      const hasProse = sectionHasProseBeforeLine(section, firstYamlFence?.openingLine.number);
 
       if (!hasProse) {
         diagnostics.push({
@@ -105,10 +100,7 @@ export function validateDocumentStructure(
   return { diagnostics, tokenFences };
 }
 
-function validateRequiredSections(
-  document: DesignDocument,
-  diagnostics: Diagnostic[],
-): void {
+function validateRequiredSections(document: DesignDocument, diagnostics: Diagnostic[]): void {
   const sectionNames = new Set(document.sections.map((section) => section.name));
 
   for (const requiredName of requiredSectionNames) {
@@ -129,10 +121,7 @@ function validateRequiredSections(
   }
 }
 
-function validateDuplicateKnownSections(
-  document: DesignDocument,
-  diagnostics: Diagnostic[],
-): void {
+function validateDuplicateKnownSections(document: DesignDocument, diagnostics: Diagnostic[]): void {
   const seen = new Set<string>();
 
   for (const section of document.sections) {
@@ -182,10 +171,7 @@ function validateKnownSectionOrder(
   }
 }
 
-function validateMetadataPosition(
-  document: DesignDocument,
-  diagnostics: Diagnostic[],
-): void {
+function validateMetadataPosition(document: DesignDocument, diagnostics: Diagnostic[]): void {
   const metadata = document.sections.find((section) => section.name === "Metadata");
   if (metadata === undefined) {
     return;

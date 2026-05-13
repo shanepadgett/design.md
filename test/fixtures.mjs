@@ -97,10 +97,7 @@ export function withMotionYaml(yaml, source = validDesignMd) {
 }
 
 export function withMetadata(yaml, source = validDesignMd) {
-  return source.replace(
-    "# Acme Design\n\n",
-    `# Acme Design\n\n## Metadata\n\n${fence(yaml)}\n\n`,
-  );
+  return source.replace("# Acme Design\n\n", `# Acme Design\n\n## Metadata\n\n${fence(yaml)}\n\n`);
 }
 
 export function appendSection(source, section) {

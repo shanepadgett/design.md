@@ -31,9 +31,7 @@ export interface Result<T> {
   diagnostics: Diagnostic[];
 }
 
-export function summarizeDiagnostics(
-  diagnostics: readonly Diagnostic[],
-): DiagnosticSummary {
+export function summarizeDiagnostics(diagnostics: readonly Diagnostic[]): DiagnosticSummary {
   let errors = 0;
   let warnings = 0;
 

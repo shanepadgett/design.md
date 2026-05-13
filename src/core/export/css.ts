@@ -236,10 +236,7 @@ function stringifyCssValue(
   return valid ? converted : undefined;
 }
 
-function mapTokenPath(
-  path: string,
-  format: DesignMdExportFormat,
-): VariableMapping | undefined {
+function mapTokenPath(path: string, format: DesignMdExportFormat): VariableMapping | undefined {
   const mapping = mapTokenPathForCss(path);
   if (mapping === undefined) {
     return undefined;
@@ -454,8 +451,5 @@ function basename(filePath: string | undefined): string {
 }
 
 function cssStringContent(value: string): string {
-  return value
-    .replace(/\\/g, "\\\\")
-    .replace(/"/g, "\\\"")
-    .replace(/\n/g, "\\a ");
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\a ");
 }

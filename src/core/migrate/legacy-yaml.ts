@@ -1,9 +1,5 @@
 import type { Diagnostic, SourceSpan } from "../diagnostics/types.js";
-import {
-  spanFromOffsets,
-  type SourceFile,
-  type SourceLine,
-} from "../source/source-file.js";
+import { spanFromOffsets, type SourceFile, type SourceLine } from "../source/source-file.js";
 import type { LegacyMap, LegacyValue } from "./types.js";
 
 interface ParserState {
@@ -26,10 +22,7 @@ export interface ParsedLegacyYaml {
   diagnostics: Diagnostic[];
 }
 
-export function parseLegacyYaml(
-  sourceFile: SourceFile,
-  lines: SourceLine[],
-): ParsedLegacyYaml {
+export function parseLegacyYaml(sourceFile: SourceFile, lines: SourceLine[]): ParsedLegacyYaml {
   const state: ParserState = {
     sourceFile,
     lines,
@@ -91,25 +84,45 @@ function parseMap(state: ParserState, indent: number): LegacyMap {
     }
 
     if (currentIndent % 2 !== 0) {
-      report(state, line, "legacy-yaml-indentation", "Legacy YAML indentation must use two spaces per level.");
+      report(
+        state,
+        line,
+        "legacy-yaml-indentation",
+        "Legacy YAML indentation must use two spaces per level.",
+      );
     }
 
     if (currentIndent > indent) {
-      report(state, line, "legacy-yaml-indentation", "Indentation may only increase after a key with no value.");
+      report(
+        state,
+        line,
+        "legacy-yaml-indentation",
+        "Indentation may only increase after a key with no value.",
+      );
       endOffset = line.endOffset;
       state.index += 1;
       continue;
     }
 
     if (trimmed.startsWith("- ")) {
-      report(state, line, "legacy-yaml-unsupported", "Legacy migration does not support YAML lists.");
+      report(
+        state,
+        line,
+        "legacy-yaml-unsupported",
+        "Legacy migration does not support YAML lists.",
+      );
       endOffset = line.endOffset;
       state.index += 1;
       continue;
     }
 
     if (trimmed.startsWith("#")) {
-      report(state, line, "legacy-yaml-unsupported", "Legacy migration does not support YAML comments.");
+      report(
+        state,
+        line,
+        "legacy-yaml-unsupported",
+        "Legacy migration does not support YAML comments.",
+      );
       endOffset = line.endOffset;
       state.index += 1;
       continue;
@@ -153,11 +166,7 @@ function parseMap(state: ParserState, indent: number): LegacyMap {
   const map: LegacyMap = {
     kind: "map",
     entries,
-    span: spanFromOffsets(
-      state.sourceFile,
-      firstLine?.startOffset ?? endOffset,
-      endOffset,
-    ),
+    span: spanFromOffsets(state.sourceFile, firstLine?.startOffset ?? endOffset, endOffset),
   };
 
   return map;
@@ -172,18 +181,33 @@ function parseNestedMap(
 
   const nextLine = currentLine(state);
   if (nextLine === undefined) {
-    report(state, parentLine, "legacy-yaml-empty-value", "A key with no value must introduce a nested map.");
+    report(
+      state,
+      parentLine,
+      "legacy-yaml-empty-value",
+      "A key with no value must introduce a nested map.",
+    );
     return emptyMap(state, parentLine);
   }
 
   const nextIndent = leadingSpaces(nextLine.text);
   if (nextIndent <= parentIndent) {
-    report(state, parentLine, "legacy-yaml-empty-value", "A key with no value must introduce a nested map.");
+    report(
+      state,
+      parentLine,
+      "legacy-yaml-empty-value",
+      "A key with no value must introduce a nested map.",
+    );
     return emptyMap(state, parentLine);
   }
 
   if (nextIndent !== parentIndent + 2) {
-    report(state, nextLine, "legacy-yaml-indentation", "Legacy YAML indentation must use exactly two spaces per nesting level.");
+    report(
+      state,
+      nextLine,
+      "legacy-yaml-indentation",
+      "Legacy YAML indentation must use exactly two spaces per nesting level.",
+    );
   }
 
   return parseMap(state, parentIndent + 2);
@@ -202,8 +226,18 @@ function parseKeyValue(
     return undefined;
   }
 
-  if (trimmed.startsWith("&") || trimmed.startsWith("*") || trimmed.startsWith("!") || trimmed.startsWith("<<")) {
-    report(state, line, "legacy-yaml-unsupported", "YAML anchors, aliases, tags, and merge keys are not supported.");
+  if (
+    trimmed.startsWith("&") ||
+    trimmed.startsWith("*") ||
+    trimmed.startsWith("!") ||
+    trimmed.startsWith("<<")
+  ) {
+    report(
+      state,
+      line,
+      "legacy-yaml-unsupported",
+      "YAML anchors, aliases, tags, and merge keys are not supported.",
+    );
     return undefined;
   }
 
@@ -222,11 +256,8 @@ function parseKeyValue(
 
   const valueSource = content.slice(colonIndex + 1);
   const valueText = valueSource.trimStart();
-  const valueStartOffset = line.startOffset
-    + indent
-    + colonIndex
-    + 1
-    + (valueSource.length - valueText.length);
+  const valueStartOffset =
+    line.startOffset + indent + colonIndex + 1 + (valueSource.length - valueText.length);
 
   return {
     key: parsedKey.key,
@@ -286,11 +317,7 @@ function parseKey(
   return { key, keySpan };
 }
 
-function parseScalarValue(
-  state: ParserState,
-  source: string,
-  startOffset: number,
-): LegacyValue {
+function parseScalarValue(state: ParserState, source: string, startOffset: number): LegacyValue {
   const trimmed = source.trimEnd();
   const span = spanFromOffsets(state.sourceFile, startOffset, startOffset + trimmed.length);
 
@@ -352,7 +379,7 @@ function parseScalarValue(
       message: "YAML anchors, aliases, and tags are not supported by migration.",
       span,
     });
-  } else if (/^[\[{]/.test(trimmed)) {
+  } else if (/^[[{]/.test(trimmed)) {
     state.diagnostics.push({
       severity: "error",
       rule: "legacy-yaml-unsupported",
@@ -478,20 +505,11 @@ function findOutsideQuotes(source: string, character: string): number {
   return -1;
 }
 
-function report(
-  state: ParserState,
-  line: SourceLine,
-  rule: string,
-  message: string,
-): void {
+function report(state: ParserState, line: SourceLine, rule: string, message: string): void {
   state.diagnostics.push({
     severity: "error",
     rule,
     message,
-    span: spanFromOffsets(
-      state.sourceFile,
-      line.startOffset,
-      line.startOffset + line.text.length,
-    ),
+    span: spanFromOffsets(state.sourceFile, line.startOffset, line.startOffset + line.text.length),
   });
 }

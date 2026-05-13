@@ -1,6 +1,12 @@
 import type { DesignMdExportFormat } from "../core/export/css.js";
 
-export type CliCommand = ExportCommand | HelpCommand | LintCommand | MigrateCommand | UsageErrorCommand | VersionCommand;
+export type CliCommand =
+  | ExportCommand
+  | HelpCommand
+  | LintCommand
+  | MigrateCommand
+  | UsageErrorCommand
+  | VersionCommand;
 
 export interface HelpCommand {
   kind: "help";

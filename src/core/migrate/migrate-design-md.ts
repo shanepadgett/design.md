@@ -93,7 +93,8 @@ function buildMigratedDocument(root: LegacyMap, body: string): string {
     if (description !== undefined) {
       sections.set("Overview", {
         name: "Overview",
-        contentLines: preambleLines.length > 0 ? [description, "", ...preambleLines] : [description],
+        contentLines:
+          preambleLines.length > 0 ? [description, "", ...preambleLines] : [description],
       });
     } else if (preambleLines.length > 0) {
       sections.set("Overview", { name: "Overview", contentLines: preambleLines });
@@ -147,15 +148,17 @@ function buildTokenSections(root: LegacyMap): Map<string, LegacyMap> {
   }
 
   if (spacing !== undefined) {
-    sections.set("Layout", legacyMap([
-      legacyEntry("spacing", transformMap(spacing, rewriteReferences)),
-    ]));
+    sections.set(
+      "Layout",
+      legacyMap([legacyEntry("spacing", transformMap(spacing, rewriteReferences))]),
+    );
   }
 
   if (rounded !== undefined) {
-    sections.set("Shapes", legacyMap([
-      legacyEntry("radius", transformMap(rounded, rewriteReferences)),
-    ]));
+    sections.set(
+      "Shapes",
+      legacyMap([legacyEntry("radius", transformMap(rounded, rewriteReferences))]),
+    );
   }
 
   if (components !== undefined) {
@@ -176,18 +179,25 @@ function migrateTypography(source: LegacyMap): LegacyMap {
     entries.push(legacyEntry("baseFontSize", baseFontSize));
   }
 
-  entries.push(legacyEntry(
-    "text",
-    legacyMap(source.entries.map((style) => legacyEntry(
-      style.key,
-      isMap(style.value)
-        ? legacyMap(style.value.entries.map((field) => legacyEntry(
-          field.key,
-          migrateTypographyField(field.key, field.value),
-        )))
-        : transformValue(style.value, rewriteReferences),
-    ))),
-  ));
+  entries.push(
+    legacyEntry(
+      "text",
+      legacyMap(
+        source.entries.map((style) =>
+          legacyEntry(
+            style.key,
+            isMap(style.value)
+              ? legacyMap(
+                  style.value.entries.map((field) =>
+                    legacyEntry(field.key, migrateTypographyField(field.key, field.value)),
+                  ),
+                )
+              : transformValue(style.value, rewriteReferences),
+          ),
+        ),
+      ),
+    ),
+  );
 
   return legacyMap(entries);
 }
@@ -225,7 +235,11 @@ function readTypographyFontSize(source: LegacyMap, styleName: string): LegacyVal
 
 function migrateTypographyField(key: string, value: LegacyValue): LegacyValue {
   const rewritten = transformValue(value, rewriteReferences);
-  if ((key === "fontWeight" || key === "lineHeight") && typeof rewritten === "string" && isNumericString(rewritten)) {
+  if (
+    (key === "fontWeight" || key === "lineHeight") &&
+    typeof rewritten === "string" &&
+    isNumericString(rewritten)
+  ) {
     return Number(rewritten);
   }
 
@@ -233,18 +247,22 @@ function migrateTypographyField(key: string, value: LegacyValue): LegacyValue {
 }
 
 function migrateComponents(source: LegacyMap): LegacyMap {
-  return legacyMap(source.entries.flatMap((component) => {
-    if (!isMap(component.value)) {
-      return [];
-    }
+  return legacyMap(
+    source.entries.flatMap((component) => {
+      if (!isMap(component.value)) {
+        return [];
+      }
 
-    const base = legacyMap(component.value.entries.map((property) => {
-      const propertyKey = property.key === "rounded" ? "radius" : property.key;
-      return legacyEntry(propertyKey, migrateComponentProperty(property.key, property.value));
-    }));
+      const base = legacyMap(
+        component.value.entries.map((property) => {
+          const propertyKey = property.key === "rounded" ? "radius" : property.key;
+          return legacyEntry(propertyKey, migrateComponentProperty(property.key, property.value));
+        }),
+      );
 
-    return [legacyEntry(component.key, legacyMap([legacyEntry("base", base)]))];
-  }));
+      return [legacyEntry(component.key, legacyMap([legacyEntry("base", base)]))];
+    }),
+  );
 }
 
 function migrateComponentProperty(key: string, value: LegacyValue): LegacyValue {
@@ -258,14 +276,12 @@ function migrateComponentProperty(key: string, value: LegacyValue): LegacyValue 
   return transformValue(value, rewriteReferences);
 }
 
-function transformMap(
-  map: LegacyMap,
-  transformScalar: (value: string) => string,
-): LegacyMap {
-  return legacyMap(map.entries.map((entry) => legacyEntry(
-    entry.key,
-    transformValue(entry.value, transformScalar),
-  )));
+function transformMap(map: LegacyMap, transformScalar: (value: string) => string): LegacyMap {
+  return legacyMap(
+    map.entries.map((entry) =>
+      legacyEntry(entry.key, transformValue(entry.value, transformScalar)),
+    ),
+  );
 }
 
 function transformValue(
@@ -357,11 +373,7 @@ function parseMarkdownBody(body: string): ParsedMarkdownBody {
   return parsed;
 }
 
-function formatSection(
-  name: string,
-  contentLines: readonly string[],
-  tokens?: LegacyMap,
-): string {
+function formatSection(name: string, contentLines: readonly string[], tokens?: LegacyMap): string {
   const lines = [`## ${name}`];
   const trimmedContent = trimBlankLines(contentLines);
 

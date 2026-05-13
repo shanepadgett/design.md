@@ -10,8 +10,8 @@ function createIo(files, existingFiles = {}) {
 
   return {
     io: {
-      fileExists: async (filePath) => Object.hasOwn(existingFiles, filePath)
-        || Object.hasOwn(writtenFiles, filePath),
+      fileExists: async (filePath) =>
+        Object.hasOwn(existingFiles, filePath) || Object.hasOwn(writtenFiles, filePath),
       readFile: async (filePath) => {
         if (!Object.hasOwn(files, filePath)) {
           throw new Error("ENOENT");
@@ -134,7 +134,10 @@ test("CLI export protects existing output unless force is set", async () => {
 
   const forced = createIo({ "DESIGN.md": validDesignMd }, { "custom.css": "old" });
   assert.equal(
-    await runCli(["export", "--format", "css", "--out", "custom.css", "--force", "DESIGN.md"], forced.io),
+    await runCli(
+      ["export", "--format", "css", "--out", "custom.css", "--force", "DESIGN.md"],
+      forced.io,
+    ),
     0,
   );
   assert.match(forced.output().writtenFiles["custom.css"], /:root \{/);

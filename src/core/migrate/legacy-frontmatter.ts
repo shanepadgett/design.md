@@ -30,7 +30,8 @@ export function extractLegacyFrontmatter(
     const diagnostic: Diagnostic = {
       severity: "error",
       rule: "legacy-frontmatter",
-      message: "No legacy YAML frontmatter found. migrate only converts frontmatter-based DESIGN.md files.",
+      message:
+        "No legacy YAML frontmatter found. migrate only converts frontmatter-based DESIGN.md files.",
     };
 
     if (firstLine !== undefined) {
@@ -60,9 +61,10 @@ export function extractLegacyFrontmatter(
     return { diagnostics };
   }
 
-  const bodyStart = source.charCodeAt(closingLine.endOffset) === 10
-    ? closingLine.endOffset + 1
-    : closingLine.endOffset;
+  const bodyStart =
+    source.charCodeAt(closingLine.endOffset) === 10
+      ? closingLine.endOffset + 1
+      : closingLine.endOffset;
 
   return {
     diagnostics,

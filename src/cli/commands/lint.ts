@@ -5,10 +5,7 @@ import type { CommandIO } from "../io.js";
 
 export type LintCommandIO = Pick<CommandIO, "readFile" | "stdout" | "stderr">;
 
-export async function runLintCommand(
-  command: LintCommand,
-  io: LintCommandIO,
-): Promise<number> {
+export async function runLintCommand(command: LintCommand, io: LintCommandIO): Promise<number> {
   let source: string;
 
   try {
@@ -28,9 +25,7 @@ export async function runLintCommand(
   if (result.diagnostics.length === 0) {
     io.stdout.write(`${command.filePath}: valid\n`);
   } else {
-    io.stdout.write(
-      `${result.summary.errors} error(s), ${result.summary.warnings} warning(s)\n`,
-    );
+    io.stdout.write(`${result.summary.errors} error(s), ${result.summary.warnings} warning(s)\n`);
   }
 
   return result.valid ? 0 : 1;

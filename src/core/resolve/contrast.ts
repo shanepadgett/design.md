@@ -145,9 +145,8 @@ function validatePair(
     return;
   }
 
-  const effectiveForeground = foreground.alpha < 1
-    ? compositeColor(foreground, effectiveBackground)
-    : foreground;
+  const effectiveForeground =
+    foreground.alpha < 1 ? compositeColor(foreground, effectiveBackground) : foreground;
   const ratio = contrastRatio(effectiveForeground, effectiveBackground);
 
   if (ratio >= contrastThreshold) {
@@ -190,7 +189,12 @@ function collectComponentProps(tokens: ReadonlyMap<string, ResolvedToken>): {
       continue;
     }
 
-    if (scope !== "variants" || third === undefined || fourth === undefined || fifth === undefined) {
+    if (
+      scope !== "variants" ||
+      third === undefined ||
+      fourth === undefined ||
+      fifth === undefined
+    ) {
       continue;
     }
 
@@ -279,9 +283,7 @@ function resolveValue(
     }
 
     const themedValue = value[theme];
-    return themedValue === undefined
-      ? undefined
-      : resolveValue(context, themedValue, theme, seen);
+    return themedValue === undefined ? undefined : resolveValue(context, themedValue, theme, seen);
   }
 
   const wholeReference = /^\{([^{}]+)\}$/.exec(value);
@@ -355,9 +357,15 @@ function compositeColor(foreground: RgbColor, background: RgbColor): RgbColor {
   }
 
   return {
-    r: (foreground.r * foreground.alpha + background.r * background.alpha * (1 - foreground.alpha)) / alpha,
-    g: (foreground.g * foreground.alpha + background.g * background.alpha * (1 - foreground.alpha)) / alpha,
-    b: (foreground.b * foreground.alpha + background.b * background.alpha * (1 - foreground.alpha)) / alpha,
+    r:
+      (foreground.r * foreground.alpha + background.r * background.alpha * (1 - foreground.alpha)) /
+      alpha,
+    g:
+      (foreground.g * foreground.alpha + background.g * background.alpha * (1 - foreground.alpha)) /
+      alpha,
+    b:
+      (foreground.b * foreground.alpha + background.b * background.alpha * (1 - foreground.alpha)) /
+      alpha,
     alpha,
   };
 }
@@ -419,9 +427,8 @@ function parseHexColor(value: string): RgbColor | undefined {
     return undefined;
   }
 
-  const expanded = hex.length <= 4
-    ? [...hex].map((character) => `${character}${character}`).join("")
-    : hex;
+  const expanded =
+    hex.length <= 4 ? [...hex].map((character) => `${character}${character}`).join("") : hex;
   const red = expanded.slice(0, 2);
   const green = expanded.slice(2, 4);
   const blue = expanded.slice(4, 6);
@@ -469,7 +476,12 @@ function parseHslColor(body: string): RgbColor | undefined {
   const lightness = parsePercentage(args.components[2]);
   const alpha = parseAlpha(args.alpha ?? args.components[3] ?? "1");
 
-  if (hue === undefined || saturation === undefined || lightness === undefined || alpha === undefined) {
+  if (
+    hue === undefined ||
+    saturation === undefined ||
+    lightness === undefined ||
+    alpha === undefined
+  ) {
     return undefined;
   }
 
@@ -520,7 +532,7 @@ function parseOklchColor(body: string): RgbColor | undefined {
     return undefined;
   }
 
-  const radians = hue * Math.PI / 180;
+  const radians = (hue * Math.PI) / 180;
   return oklabToSrgb(lightness, chroma * Math.cos(radians), chroma * Math.sin(radians), alpha);
 }
 
@@ -639,14 +651,18 @@ function parseHue(value: string | undefined): number | undefined {
 
   if (value.endsWith("rad")) {
     const number = Number(value.slice(0, -3));
-    return Number.isFinite(number) ? number * 180 / Math.PI : undefined;
+    return Number.isFinite(number) ? (number * 180) / Math.PI : undefined;
   }
 
   const number = Number(value.endsWith("deg") ? value.slice(0, -3) : value);
   return Number.isFinite(number) ? number : undefined;
 }
 
-function hslMatch(huePrime: number, chroma: number, x: number): { r: number; g: number; b: number } {
+function hslMatch(
+  huePrime: number,
+  chroma: number,
+  x: number,
+): { r: number; g: number; b: number } {
   if (huePrime < 1) {
     return { r: chroma, g: x, b: 0 };
   }
@@ -712,16 +728,12 @@ function linearSrgbToRgbColor(color: RgbColor): RgbColor {
 }
 
 function linearSrgbChannel(channel: number): number {
-  return channel <= 0.04045
-    ? channel / 12.92
-    : ((channel + 0.055) / 1.055) ** 2.4;
+  return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
 }
 
 function encodedSrgbChannel(channel: number): number {
   const clamped = clamp(channel, 0, 1);
-  return clamped <= 0.0031308
-    ? clamped * 12.92
-    : 1.055 * (clamped ** (1 / 2.4)) - 0.055;
+  return clamped <= 0.0031308 ? clamped * 12.92 : 1.055 * clamped ** (1 / 2.4) - 0.055;
 }
 
 function modulo(value: number, divisor: number): number {

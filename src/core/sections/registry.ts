@@ -119,9 +119,7 @@ const definitionsByName = new Map<KnownSectionName, SectionDefinition>(
   sectionDefinitions.map((definition) => [definition.name, definition]),
 );
 
-export function getSectionDefinition(
-  name: string,
-): SectionDefinition | undefined {
+export function getSectionDefinition(name: string): SectionDefinition | undefined {
   return definitionsByName.get(name as KnownSectionName);
 }
 

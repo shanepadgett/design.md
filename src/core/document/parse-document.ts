@@ -1,19 +1,12 @@
 import type { Diagnostic } from "../diagnostics/types.js";
-import {
-  createSourceFile,
-  lineSpan,
-  type SourceLine,
-} from "../source/source-file.js";
+import { createSourceFile, lineSpan, type SourceLine } from "../source/source-file.js";
 import type { CodeFence, DesignDocument, DesignSection, Heading } from "./types.js";
 
 export interface ParseDocumentOptions {
   filePath?: string;
 }
 
-export function parseDocument(
-  source: string,
-  options: ParseDocumentOptions = {},
-): DesignDocument {
+export function parseDocument(source: string, options: ParseDocumentOptions = {}): DesignDocument {
   const sourceFile = createSourceFile(source, options.filePath);
   const diagnostics: Diagnostic[] = [];
   const h1Headings: Heading[] = [];
@@ -21,9 +14,7 @@ export function parseDocument(
   let currentSection: DesignSection | undefined;
   let activeFence: CodeFence | undefined;
 
-  const firstContentLine = sourceFile.lines.find(
-    (line) => line.text.trim().length > 0,
-  );
+  const firstContentLine = sourceFile.lines.find((line) => line.text.trim().length > 0);
 
   if (firstContentLine === undefined || !isH1Line(firstContentLine.text)) {
     const diagnostic: Diagnostic = {
@@ -157,10 +148,7 @@ export function sectionHasProseBeforeLine(
   return false;
 }
 
-export function isFinalNonWhitespaceBlock(
-  section: DesignSection,
-  fence: CodeFence,
-): boolean {
+export function isFinalNonWhitespaceBlock(section: DesignSection, fence: CodeFence): boolean {
   const closingLineNumber = fence.closingLine?.number ?? fence.openingLine.number;
 
   return section.lines.every((line) => {

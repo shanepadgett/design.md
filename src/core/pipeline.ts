@@ -2,10 +2,7 @@ import type { Diagnostic } from "./diagnostics/types.js";
 import { summarizeDiagnostics } from "./diagnostics/types.js";
 import { parseDocument } from "./document/parse-document.js";
 import type { DesignDocument } from "./document/types.js";
-import {
-  serializeDesignSystemCss,
-  type DesignMdExportFormat,
-} from "./export/css.js";
+import { serializeDesignSystemCss, type DesignMdExportFormat } from "./export/css.js";
 import type { DesignSystem } from "./resolve/types.js";
 import { resolveDesignSystem } from "./resolve/resolve-design-system.js";
 import type { TokenGroupName } from "./sections/registry.js";
@@ -13,10 +10,7 @@ import type { ParsedSectionToken } from "./sections/tokens.js";
 import { parseTokenYaml } from "./token-yaml/parse-token-yaml.js";
 import { validateDocumentStructure } from "./validation/document-structure.js";
 import { validateSectionSchemas } from "./validation/section-schemas.js";
-export type {
-  DesignMdMigrateOptions,
-  DesignMdMigrateResult,
-} from "./migrate/types.js";
+export type { DesignMdMigrateOptions, DesignMdMigrateResult } from "./migrate/types.js";
 export { migrateDesignMd } from "./migrate/migrate-design-md.js";
 
 export interface DesignMdOptions {
@@ -54,17 +48,11 @@ export interface DesignMdExportResult extends DesignMdParseResult {
   output?: string;
 }
 
-export function parseDesignMd(
-  source: string,
-  options: DesignMdOptions = {},
-): DesignMdParseResult {
+export function parseDesignMd(source: string, options: DesignMdOptions = {}): DesignMdParseResult {
   const document = parseDocument(source, options);
   const structure = validateDocumentStructure(document);
   const sectionTokens: ParsedSectionToken[] = [];
-  const diagnostics: Diagnostic[] = [
-    ...document.diagnostics,
-    ...structure.diagnostics,
-  ];
+  const diagnostics: Diagnostic[] = [...document.diagnostics, ...structure.diagnostics];
 
   for (const tokenFence of structure.tokenFences) {
     const parsed = parseTokenYaml(document.sourceFile, tokenFence.fence.contentLines);

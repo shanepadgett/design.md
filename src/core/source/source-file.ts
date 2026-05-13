@@ -27,9 +27,8 @@ export function createSourceFile(source: string, filePath?: string): SourceFile 
     }
 
     const rawEnd = isLineFeed ? index : source.length;
-    const textEnd = rawEnd > lineStart && source.charCodeAt(rawEnd - 1) === 13
-      ? rawEnd - 1
-      : rawEnd;
+    const textEnd =
+      rawEnd > lineStart && source.charCodeAt(rawEnd - 1) === 13 ? rawEnd - 1 : rawEnd;
 
     lines.push({
       number: lineNumber,
@@ -79,11 +78,7 @@ export function spanFromOffsets(
 }
 
 export function lineSpan(sourceFile: SourceFile, line: SourceLine): SourceSpan {
-  return spanFromOffsets(
-    sourceFile,
-    line.startOffset,
-    line.startOffset + line.text.length,
-  );
+  return spanFromOffsets(sourceFile, line.startOffset, line.startOffset + line.text.length);
 }
 
 function findLine(lines: readonly SourceLine[], offset: number): SourceLine {

@@ -20,9 +20,10 @@ function yaml(...lines) {
 function assertDiagnostic(result, rule, severity, path) {
   assert.ok(
     result.diagnostics.some(
-      (diagnostic) => diagnostic.rule === rule
-        && diagnostic.severity === severity
-        && (path === undefined || diagnostic.path === path),
+      (diagnostic) =>
+        diagnostic.rule === rule &&
+        diagnostic.severity === severity &&
+        (path === undefined || diagnostic.path === path),
     ),
     `Expected ${severity} diagnostic '${rule}'${path === undefined ? "" : ` at ${path}`}. Got: ${result.diagnostics.map((diagnostic) => `${diagnostic.rule}:${diagnostic.path ?? ""}`).join(", ")}`,
   );
@@ -37,46 +38,58 @@ function assertNoDiagnostic(result, rule) {
 }
 
 test("embedded token references validate missing and non-primitive paths", () => {
-  const validReference = lint(replaceTypographyYaml(yaml(
-    "fontFamily:",
-    "  sans: \"Inter\"",
-    "baseFontSize: \"16px\"",
-    "text:",
-    "  body:",
-    "    fontFamily: \"Inter, {typography.fontFamily.sans}\"",
-    "    fontSize: \"1rem\"",
-    "    lineHeight: 1.5",
-  )));
+  const validReference = lint(
+    replaceTypographyYaml(
+      yaml(
+        "fontFamily:",
+        '  sans: "Inter"',
+        'baseFontSize: "16px"',
+        "text:",
+        "  body:",
+        '    fontFamily: "Inter, {typography.fontFamily.sans}"',
+        '    fontSize: "1rem"',
+        "    lineHeight: 1.5",
+      ),
+    ),
+  );
 
   assertNoDiagnostic(validReference, "missing-reference");
   assertNoDiagnostic(validReference, "non-primitive-reference");
 
   assertDiagnostic(
-    lint(replaceTypographyYaml(yaml(
-      "fontFamily:",
-      "  sans: \"Inter\"",
-      "baseFontSize: \"16px\"",
-      "text:",
-      "  body:",
-      "    fontFamily: \"Inter, {typography.fontFamily.missing}\"",
-      "    fontSize: \"1rem\"",
-      "    lineHeight: 1.5",
-    ))),
+    lint(
+      replaceTypographyYaml(
+        yaml(
+          "fontFamily:",
+          '  sans: "Inter"',
+          'baseFontSize: "16px"',
+          "text:",
+          "  body:",
+          '    fontFamily: "Inter, {typography.fontFamily.missing}"',
+          '    fontSize: "1rem"',
+          "    lineHeight: 1.5",
+        ),
+      ),
+    ),
     "missing-reference",
     "error",
   );
 
   assertDiagnostic(
-    lint(replaceTypographyYaml(yaml(
-      "fontFamily:",
-      "  sans: \"Inter\"",
-      "baseFontSize: \"16px\"",
-      "text:",
-      "  body:",
-      "    fontFamily: \"Inter, {typography.fontFamily}\"",
-      "    fontSize: \"1rem\"",
-      "    lineHeight: 1.5",
-    ))),
+    lint(
+      replaceTypographyYaml(
+        yaml(
+          "fontFamily:",
+          '  sans: "Inter"',
+          'baseFontSize: "16px"',
+          "text:",
+          "  body:",
+          '    fontFamily: "Inter, {typography.fontFamily}"',
+          '    fontSize: "1rem"',
+          "    lineHeight: 1.5",
+        ),
+      ),
+    ),
     "non-primitive-reference",
     "error",
   );
@@ -100,7 +113,12 @@ test("prose token references validate valid and invalid shapes", () => {
   );
 
   assertDiagnostic(
-    lint(validDesignMd.replace("Acme uses calm surfaces", "Use { colors.primary } while Acme uses calm surfaces")),
+    lint(
+      validDesignMd.replace(
+        "Acme uses calm surfaces",
+        "Use { colors.primary } while Acme uses calm surfaces",
+      ),
+    ),
     "invalid-reference",
     "error",
   );
@@ -108,16 +126,18 @@ test("prose token references validate valid and invalid shapes", () => {
 
 test("themes resolve references while non-metadata light dark maps stay nested tokens", () => {
   const themed = withMetadata(
-    yaml("themes:", "  - \"light\"", "  - \"dark\"", "defaultTheme: \"light\""),
-    replaceColorsYaml(yaml(
-      "primary: \"{colors.surface}\"",
-      "surface:",
-      "  light: \"#FFFFFF\"",
-      "  dark: \"#111111\"",
-      "on-surface:",
-      "  light: \"#111111\"",
-      "  dark: \"#FFFFFF\"",
-    )),
+    yaml("themes:", '  - "light"', '  - "dark"', 'defaultTheme: "light"'),
+    replaceColorsYaml(
+      yaml(
+        'primary: "{colors.surface}"',
+        "surface:",
+        '  light: "#FFFFFF"',
+        '  dark: "#111111"',
+        "on-surface:",
+        '  light: "#111111"',
+        '  dark: "#FFFFFF"',
+      ),
+    ),
   );
   const themedResult = lint(themed);
 
@@ -125,15 +145,19 @@ test("themes resolve references while non-metadata light dark maps stay nested t
   assert.equal(themedResult.designSystem.defaultTheme, "light");
   assertNoDiagnostic(themedResult, "missing-reference");
 
-  const nestedResult = lint(replaceColorsYaml(yaml(
-    "primary: \"#1A1C1E\"",
-    "surface:",
-    "  light: \"#FFFFFF\"",
-    "  dark: \"#111111\"",
-    "on-surface:",
-    "  light: \"#111111\"",
-    "  dark: \"#FFFFFF\"",
-  )));
+  const nestedResult = lint(
+    replaceColorsYaml(
+      yaml(
+        'primary: "#1A1C1E"',
+        "surface:",
+        '  light: "#FFFFFF"',
+        '  dark: "#111111"',
+        "on-surface:",
+        '  light: "#111111"',
+        '  dark: "#FFFFFF"',
+      ),
+    ),
+  );
 
   assert.equal(nestedResult.designSystem.tokens.has("colors.surface.light"), true);
   assert.equal(nestedResult.designSystem.tokens.has("colors.surface"), false);
@@ -142,26 +166,66 @@ test("themes resolve references while non-metadata light dark maps stay nested t
 test("hard-coded prose warnings cover colors, dimensions, times, and skip code fences", () => {
   for (const value of ["#ffffff", "oklch(62% 0.18 250)", "16px", "300ms"]) {
     assertDiagnostic(
-      lint(validDesignMd.replace("Acme uses calm surfaces", `Use ${value} while Acme uses calm surfaces`)),
+      lint(
+        validDesignMd.replace(
+          "Acme uses calm surfaces",
+          `Use ${value} while Acme uses calm surfaces`,
+        ),
+      ),
       "hard-coded-prose-value",
       "warning",
     );
   }
 
-  const codeFence = lint(validDesignMd.replace(
-    "Acme uses calm surfaces and clear hierarchy.",
-    "Acme uses calm surfaces and clear hierarchy.\n\n```css\n.button { margin: 16px; color: #ffffff; transition: 300ms; }\n```",
-  ));
+  const codeFence = lint(
+    validDesignMd.replace(
+      "Acme uses calm surfaces and clear hierarchy.",
+      "Acme uses calm surfaces and clear hierarchy.\n\n```css\n.button { margin: 16px; color: #ffffff; transition: 300ms; }\n```",
+    ),
+  );
 
   assertNoDiagnostic(codeFence, "hard-coded-prose-value");
 });
 
 test("contrast checks every semantic color pair", () => {
   const cases = [
-    ["colors.surface", "colors.on-surface", yaml("primary: \"#000000\"", "surface: \"#777777\"", "on-surface: \"#777777\"")],
-    ["colors.primary", "colors.on-primary", yaml("primary: \"#777777\"", "on-primary: \"#777777\"", "surface: \"#ffffff\"", "on-surface: \"#000000\"")],
-    ["colors.secondary", "colors.on-secondary", yaml("primary: \"#000000\"", "secondary: \"#777777\"", "on-secondary: \"#777777\"", "surface: \"#ffffff\"", "on-surface: \"#000000\"")],
-    ["colors.error", "colors.on-error", yaml("primary: \"#000000\"", "error: \"#777777\"", "on-error: \"#777777\"", "surface: \"#ffffff\"", "on-surface: \"#000000\"")],
+    [
+      "colors.surface",
+      "colors.on-surface",
+      yaml('primary: "#000000"', 'surface: "#777777"', 'on-surface: "#777777"'),
+    ],
+    [
+      "colors.primary",
+      "colors.on-primary",
+      yaml(
+        'primary: "#777777"',
+        'on-primary: "#777777"',
+        'surface: "#ffffff"',
+        'on-surface: "#000000"',
+      ),
+    ],
+    [
+      "colors.secondary",
+      "colors.on-secondary",
+      yaml(
+        'primary: "#000000"',
+        'secondary: "#777777"',
+        'on-secondary: "#777777"',
+        'surface: "#ffffff"',
+        'on-surface: "#000000"',
+      ),
+    ],
+    [
+      "colors.error",
+      "colors.on-error",
+      yaml(
+        'primary: "#000000"',
+        'error: "#777777"',
+        'on-error: "#777777"',
+        'surface: "#ffffff"',
+        'on-surface: "#000000"',
+      ),
+    ],
   ];
 
   for (const [backgroundPath, foregroundPath, colors] of cases) {
@@ -175,45 +239,54 @@ test("contrast checks every semantic color pair", () => {
 });
 
 test("contrast checks component base pairs", () => {
-  const source = withComponentsYaml(yaml(
-    "button:",
-    "  base:",
-    "    backgroundColor: \"{colors.surface}\"",
-    "    textColor: \"{colors.surface}\"",
-  ));
+  const source = withComponentsYaml(
+    yaml(
+      "button:",
+      "  base:",
+      '    backgroundColor: "{colors.surface}"',
+      '    textColor: "{colors.surface}"',
+    ),
+  );
 
   assertDiagnostic(lint(source), "contrast", "warning", "Components.button.base");
 });
 
 test("contrast handles alpha compositing and skips alpha backgrounds without backdrop", () => {
   assertDiagnostic(
-    lint(replaceColorsYaml(yaml(
-      "primary: \"#000000\"",
-      "on-primary: \"rgba(255 255 255 / 0.3)\"",
-      "surface: \"#ffffff\"",
-      "on-surface: \"#000000\"",
-    ))),
+    lint(
+      replaceColorsYaml(
+        yaml(
+          'primary: "#000000"',
+          'on-primary: "rgba(255 255 255 / 0.3)"',
+          'surface: "#ffffff"',
+          'on-surface: "#000000"',
+        ),
+      ),
+    ),
     "contrast",
     "warning",
     "colors.primary/colors.on-primary",
   );
 
   assertDiagnostic(
-    lint(replaceColorsYaml(yaml(
-      "primary: \"rgba(255 255 255 / 0.5)\"",
-      "on-primary: \"#ffffff\"",
-      "surface: \"#ffffff\"",
-      "on-surface: \"#000000\"",
-    ))),
+    lint(
+      replaceColorsYaml(
+        yaml(
+          'primary: "rgba(255 255 255 / 0.5)"',
+          'on-primary: "#ffffff"',
+          'surface: "#ffffff"',
+          'on-surface: "#000000"',
+        ),
+      ),
+    ),
     "contrast",
     "warning",
     "colors.primary/colors.on-primary",
   );
 
-  const skipped = lint(replaceColorsYaml(yaml(
-    "primary: \"rgba(255 255 255 / 0.5)\"",
-    "on-primary: \"#ffffff\"",
-  )));
+  const skipped = lint(
+    replaceColorsYaml(yaml('primary: "rgba(255 255 255 / 0.5)"', 'on-primary: "#ffffff"')),
+  );
   assertNoDiagnostic(skipped, "contrast");
 });
 
@@ -224,11 +297,11 @@ test("contrast parses supported color formats", () => {
     "oklch(100% 0 0)",
     "color(display-p3 1 1 1)",
   ]) {
-    const result = lint(replaceColorsYaml(yaml(
-      "primary: \"#000000\"",
-      `surface: "${surface}"`,
-      "on-surface: \"#000000\"",
-    )));
+    const result = lint(
+      replaceColorsYaml(
+        yaml('primary: "#000000"', `surface: "${surface}"`, 'on-surface: "#000000"'),
+      ),
+    );
 
     assertNoDiagnostic(result, "invalid-color");
     assertNoDiagnostic(result, "contrast");
@@ -244,14 +317,9 @@ test("lint API returns design system and accurate summary counts", () => {
   assert.equal(validResult.designSystem.tokenCountByGroup.layout, 3);
 
   const mixedResult = lint(
-    replaceColorsYaml(yaml(
-      "primary: \"red\"",
-      "surface: \"#ffffff\"",
-      "on-surface: \"#000000\"",
-    )).replace(
-      "Acme uses calm surfaces",
-      "Use 16px while Acme uses calm surfaces",
-    ),
+    replaceColorsYaml(
+      yaml('primary: "red"', 'surface: "#ffffff"', 'on-surface: "#000000"'),
+    ).replace("Acme uses calm surfaces", "Use 16px while Acme uses calm surfaces"),
   );
 
   assert.equal(mixedResult.summary.errors, 1);

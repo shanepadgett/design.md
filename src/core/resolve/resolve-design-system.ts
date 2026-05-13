@@ -149,7 +149,10 @@ function readThemeConfig(
 
   let defaultTheme: string | undefined;
   if (defaultThemeEntry !== undefined) {
-    if (defaultThemeEntry.value.kind !== "scalar" || defaultThemeEntry.value.valueType !== "string") {
+    if (
+      defaultThemeEntry.value.kind !== "scalar" ||
+      defaultThemeEntry.value.valueType !== "string"
+    ) {
       diagnostics.push({
         severity: "error",
         rule: "invalid-default-theme",
@@ -226,8 +229,8 @@ function readThemedValue(
 
   const keys = node.entries.map((entry) => entry.key);
   const hasThemeKey = keys.some((key) => state.themes.includes(key));
-  const exactThemeMap = keys.length === state.themes.length
-    && state.themes.every((theme) => keys.includes(theme));
+  const exactThemeMap =
+    keys.length === state.themes.length && state.themes.every((theme) => keys.includes(theme));
 
   if (!hasThemeKey) {
     return undefined;
@@ -420,7 +423,8 @@ function validateProseReferences(state: ResolveState, line: SourceLine): void {
       state.diagnostics.push({
         severity: "error",
         rule: "invalid-reference",
-        message: "Token references must contain a non-empty token path without surrounding whitespace.",
+        message:
+          "Token references must contain a non-empty token path without surrounding whitespace.",
         span,
       });
       continue;
@@ -443,7 +447,8 @@ function validateHardCodedProseValues(state: ResolveState, line: SourceLine): vo
       state.diagnostics.push({
         severity: "warning",
         rule: "hard-coded-prose-value",
-        message: "Prose should refer to token names or token references instead of hard-coded values.",
+        message:
+          "Prose should refer to token names or token references instead of hard-coded values.",
         span: spanFromOffsets(state.document.sourceFile, start, start + match[0].length),
       });
     }

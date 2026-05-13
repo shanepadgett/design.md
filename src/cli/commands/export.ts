@@ -33,7 +33,7 @@ export async function runExportCommand(
   }
 
   const outputPath = command.outPath ?? defaultOutputPath(command.filePath, command.format);
-  if (!command.force && await io.fileExists(outputPath)) {
+  if (!command.force && (await io.fileExists(outputPath))) {
     io.stderr.write(`designmd: output '${outputPath}' already exists. Use --force to overwrite.\n`);
     return 2;
   }

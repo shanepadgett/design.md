@@ -1,9 +1,5 @@
 import type { Diagnostic, SourceSpan } from "../diagnostics/types.js";
-import {
-  spanFromOffsets,
-  type SourceFile,
-  type SourceLine,
-} from "../source/source-file.js";
+import { spanFromOffsets, type SourceFile, type SourceLine } from "../source/source-file.js";
 import type {
   ParsedTokenYaml,
   TokenList,
@@ -34,10 +30,7 @@ interface ParsedKeyValue {
   hasValue: boolean;
 }
 
-export function parseTokenYaml(
-  sourceFile: SourceFile,
-  lines: SourceLine[],
-): ParsedTokenYaml {
+export function parseTokenYaml(sourceFile: SourceFile, lines: SourceLine[]): ParsedTokenYaml {
   const state: ParserState = {
     sourceFile,
     lines,
@@ -177,11 +170,7 @@ function parseMap(state: ParserState, indent: number): TokenMap {
   return {
     kind: "map",
     entries,
-    span: spanFromOffsets(
-      state.sourceFile,
-      firstLine?.startOffset ?? endOffset,
-      endOffset,
-    ),
+    span: spanFromOffsets(state.sourceFile, firstLine?.startOffset ?? endOffset, endOffset),
   };
 }
 
@@ -194,13 +183,23 @@ function parseNestedValue(
 
   const nextLine = currentLine(state);
   if (nextLine === undefined) {
-    report(state, parentLine, "empty-leaf-value", "A key with no value must introduce a nested map or list.");
+    report(
+      state,
+      parentLine,
+      "empty-leaf-value",
+      "A key with no value must introduce a nested map or list.",
+    );
     return emptyMap(state, parentLine);
   }
 
   const nextIndent = inspectIndent(state, nextLine).indent;
   if (nextIndent <= parentIndent) {
-    report(state, parentLine, "empty-leaf-value", "A key with no value must introduce a nested map or list.");
+    report(
+      state,
+      parentLine,
+      "empty-leaf-value",
+      "A key with no value must introduce a nested map or list.",
+    );
     return emptyMap(state, parentLine);
   }
 
@@ -250,11 +249,7 @@ function parseList(state: ParserState, indent: number): TokenList {
   return {
     kind: "list",
     items,
-    span: spanFromOffsets(
-      state.sourceFile,
-      firstLine?.startOffset ?? endOffset,
-      endOffset,
-    ),
+    span: spanFromOffsets(state.sourceFile, firstLine?.startOffset ?? endOffset, endOffset),
   };
 }
 
@@ -281,11 +276,8 @@ function parseKeyValue(
 
   const valueSource = content.slice(colonIndex + 1);
   const valueText = valueSource.trimStart();
-  const valueStartOffset = line.startOffset
-    + indent
-    + colonIndex
-    + 1
-    + (valueSource.length - valueText.length);
+  const valueStartOffset =
+    line.startOffset + indent + colonIndex + 1 + (valueSource.length - valueText.length);
 
   return {
     key: parsedKey.key,
@@ -365,11 +357,7 @@ function parseKey(
   return { key, quotedKey, keySpan };
 }
 
-function parseScalarValue(
-  state: ParserState,
-  source: string,
-  startOffset: number,
-): TokenScalar {
+function parseScalarValue(state: ParserState, source: string, startOffset: number): TokenScalar {
   const trimmed = source.trimEnd();
   const span = spanFromOffsets(state.sourceFile, startOffset, startOffset + trimmed.length);
 
@@ -445,7 +433,7 @@ function parseScalarValue(
       message: "YAML anchors, aliases, and tags are not supported.",
       span,
     });
-  } else if (/^[\[{]/.test(trimmed)) {
+  } else if (/^[[{]/.test(trimmed)) {
     state.diagnostics.push({
       severity: "error",
       rule: "unsupported-yaml-feature",
@@ -573,7 +561,12 @@ function checkUnsupportedLineSyntax(state: ParserState, line: SourceLine): void 
   }
 
   if (trimmed.startsWith("&") || trimmed.startsWith("*") || trimmed.startsWith("!")) {
-    report(state, line, "unsupported-yaml-feature", "YAML anchors, aliases, and tags are not supported.");
+    report(
+      state,
+      line,
+      "unsupported-yaml-feature",
+      "YAML anchors, aliases, and tags are not supported.",
+    );
   }
 
   if (trimmed.startsWith("<<")) {
@@ -679,20 +672,11 @@ function emptyMap(state: ParserState, line: SourceLine | undefined): TokenMap {
   };
 }
 
-function report(
-  state: ParserState,
-  line: SourceLine,
-  rule: string,
-  message: string,
-): void {
+function report(state: ParserState, line: SourceLine, rule: string, message: string): void {
   state.diagnostics.push({
     severity: "error",
     rule,
     message,
-    span: spanFromOffsets(
-      state.sourceFile,
-      line.startOffset,
-      line.startOffset + line.text.length,
-    ),
+    span: spanFromOffsets(state.sourceFile, line.startOffset, line.startOffset + line.text.length),
   });
 }
