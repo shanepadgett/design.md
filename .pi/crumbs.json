@@ -3,16 +3,15 @@
   "extensions": {
     "caveman": {
       "enabled": true,
-      "powers": [
-        "architecture",
-        "typescript"
-      ]
+      "powers": ["architecture", "typescript"]
     },
     "quietMarkdownlint": {
-      "excludeGlobs": [
-        "external/**",
-        "docs/_hidden/**"
-      ]
+      "excludeGlobs": ["external/**", "docs/_hidden/**"]
+    },
+    "quietMiseTask": {
+      "task": "check",
+      "excludeGlobs": ["external/**"],
+      "trackedExtensions": [".ts"]
     }
   }
 }

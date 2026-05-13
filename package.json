@@ -2,10 +2,13 @@
   "name": "design.md",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "bin": {
     "designmd": "./dist/cli/main.js"
   },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -14,23 +17,16 @@
       "import": "./dist/index.js"
     }
   },
-  "files": [
-    "dist"
-  ],
-  "packageManager": "npm@11.12.1",
-  "engines": {
-    "node": ">=24.15.0 <25"
-  },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "format:fix": "oxfmt --write . \"!dist/**\" \"!external/**\"",
-    "format:check": "oxfmt --check . \"!dist/**\" \"!external/**\"",
-    "lint:fix": "oxlint . --fix --ignore-pattern \"external/**\" --ignore-pattern \"dist/**\" --no-error-on-unmatched-pattern",
-    "lint:check": "oxlint . --ignore-pattern \"external/**\" --ignore-pattern \"dist/**\" --deny-warnings --no-error-on-unmatched-pattern",
-    "markdownlint:fix": "markdownlint \"**/*.md\" --ignore \"external/**\" --fix",
-    "markdownlint:check": "markdownlint \"**/*.md\" --ignore \"external/**\"",
-    "test": "npm run build && node --test test/*.test.mjs",
-    "typecheck": "tsc --noEmit"
+    "build": "node ./node_modules/typescript/bin/tsc -p tsconfig.build.json",
+    "format:fix": "node ./node_modules/oxfmt/bin/oxfmt --write . \"!node_modules/**\" \"!dist/**\" \"!external/**\" \"!coverage/**\" \"!.pi/**\" > /dev/null",
+    "format:check": "node ./node_modules/oxfmt/bin/oxfmt --list-different . \"!node_modules/**\" \"!dist/**\" \"!external/**\" \"!coverage/**\" \"!.pi/**\"",
+    "lint:fix": "node ./node_modules/oxlint/bin/oxlint . --fix --format unix --ignore-pattern \"node_modules/**\" --ignore-pattern \"dist/**\" --ignore-pattern \"external/**\" --ignore-pattern \"coverage/**\" --ignore-pattern \".pi/**\" --no-error-on-unmatched-pattern",
+    "lint:check": "node ./node_modules/oxlint/bin/oxlint . --format unix --ignore-pattern \"node_modules/**\" --ignore-pattern \"dist/**\" --ignore-pattern \"external/**\" --ignore-pattern \"coverage/**\" --ignore-pattern \".pi/**\" --deny-warnings --no-error-on-unmatched-pattern",
+    "markdownlint:fix": "node ./node_modules/markdownlint-cli/markdownlint.js \"**/*.md\" --ignore \"node_modules/**\" --ignore \"dist/**\" --ignore \"external/**\" --ignore \"coverage/**\" --ignore \".pi/**\" --fix",
+    "markdownlint:check": "node ./node_modules/markdownlint-cli/markdownlint.js \"**/*.md\" --ignore \"node_modules/**\" --ignore \"dist/**\" --ignore \"external/**\" --ignore \"coverage/**\" --ignore \".pi/**\"",
+    "test": "npm --silent run build && node --test test/*.test.mjs",
+    "typecheck": "node ./node_modules/typescript/bin/tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "24.12.4",
@@ -38,5 +34,9 @@
     "oxfmt": "0.49.0",
     "oxlint": "1.64.0",
     "typescript": "6.0.3"
-  }
+  },
+  "engines": {
+    "node": ">=24.15.0 <25"
+  },
+  "packageManager": "npm@11.12.1"
 }

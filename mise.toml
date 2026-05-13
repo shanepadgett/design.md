@@ -5,37 +5,42 @@ node = "24.15.0"
 
 [tasks."format:fix"]
 description = "Format supported files in place"
-run = "npm run format:fix"
+quiet = true
+run = "npm --silent run format:fix"
 
 [tasks."format:check"]
 description = "Report remaining formatting differences"
-run = "npm run format:check"
+quiet = true
+run = "npm --silent run format:check"
 
 [tasks.format]
 description = "Fix formatting first, then report remaining formatting issues"
-run = [
-  { task = "format:fix" },
-  { task = "format:check" },
-]
+quiet = true
+run = [{ task = "format:fix" }, { task = "format:check" }]
 
 [tasks."lint:fix"]
 description = "Apply safe code lint fixes"
-run = "npm run lint:fix"
+quiet = true
+run = "npm --silent run lint:fix"
 
 [tasks."lint:check"]
 description = "Report remaining code lint issues"
-run = "npm run lint:check"
+quiet = true
+run = "npm --silent run lint:check"
 
 [tasks."markdownlint:fix"]
 description = "Apply safe Markdown lint fixes"
-run = "npm run markdownlint:fix"
+quiet = true
+run = "npm --silent run markdownlint:fix"
 
 [tasks."markdownlint:check"]
 description = "Report remaining Markdown lint issues"
-run = "npm run markdownlint:check"
+quiet = true
+run = "npm --silent run markdownlint:check"
 
 [tasks.lint]
 description = "Fix lint issues first, then report remaining lint issues"
+quiet = true
 run = [
   { task = "lint:fix" },
   { task = "lint:check" },
@@ -45,20 +50,20 @@ run = [
 
 [tasks.typecheck]
 description = "Run TypeScript without emitting files"
-run = "npm run typecheck"
+quiet = true
+run = "npm --silent run typecheck"
 
 [tasks.build]
 description = "Build the CLI and library"
-run = "npm run build"
+quiet = true
+run = "npm --silent run build"
 
 [tasks.test]
 description = "Run test suite"
-run = "npm run test"
+quiet = true
+run = "npm --silent run test"
 
 [tasks.check]
 description = "Sequentially format, lint, and typecheck"
-run = [
-  { task = "format" },
-  { task = "lint" },
-  { task = "typecheck" },
-]
+quiet = true
+run = [{ task = "format" }, { task = "lint" }, { task = "typecheck" }]
