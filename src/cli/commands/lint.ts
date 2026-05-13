@@ -1,16 +1,9 @@
 import { lintDesignMd } from "../../core/pipeline.js";
-import type { Diagnostic } from "../../core/diagnostics/types.js";
 import type { LintCommand } from "../args.js";
+import { writeDiagnostics } from "../diagnostics.js";
+import type { CommandIO } from "../io.js";
 
-export interface LintCommandIO {
-  readFile(filePath: string): Promise<string>;
-  stdout: Writable;
-  stderr: Writable;
-}
-
-export interface Writable {
-  write(message: string): unknown;
-}
+export type LintCommandIO = Pick<CommandIO, "readFile" | "stdout" | "stderr">;
 
 export async function runLintCommand(
   command: LintCommand,
@@ -30,7 +23,7 @@ export async function runLintCommand(
     strict: command.strict,
   });
 
-  writeDiagnostics(io, command.filePath, result.diagnostics);
+  writeDiagnostics(io.stdout, command.filePath, result.diagnostics);
 
   if (result.diagnostics.length === 0) {
     io.stdout.write(`${command.filePath}: valid\n`);
@@ -41,30 +34,6 @@ export async function runLintCommand(
   }
 
   return result.valid ? 0 : 1;
-}
-
-function writeDiagnostics(
-  io: LintCommandIO,
-  filePath: string,
-  diagnostics: readonly Diagnostic[],
-): void {
-  for (const diagnostic of diagnostics) {
-    const location = formatLocation(filePath, diagnostic);
-    const path = diagnostic.path === undefined ? "" : ` ${diagnostic.path}`;
-    io.stdout.write(
-      `${location} ${diagnostic.severity} ${diagnostic.rule}${path}: ${diagnostic.message}\n`,
-    );
-  }
-}
-
-function formatLocation(filePath: string, diagnostic: Diagnostic): string {
-  const span = diagnostic.span;
-  if (span === undefined) {
-    return filePath;
-  }
-
-  const path = span.filePath ?? filePath;
-  return `${path}:${span.start.line}:${span.start.column}`;
 }
 
 function errorMessage(error: unknown): string {

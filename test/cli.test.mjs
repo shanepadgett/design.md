@@ -3,18 +3,24 @@ import test from "node:test";
 import { runCli } from "../dist/cli/run.js";
 import { validDesignMd } from "./fixtures.mjs";
 
-function createIo(files) {
+function createIo(files, existingFiles = {}) {
   let stdout = "";
   let stderr = "";
+  const writtenFiles = {};
 
   return {
     io: {
+      fileExists: async (filePath) => Object.hasOwn(existingFiles, filePath)
+        || Object.hasOwn(writtenFiles, filePath),
       readFile: async (filePath) => {
         if (!Object.hasOwn(files, filePath)) {
           throw new Error("ENOENT");
         }
 
         return files[filePath];
+      },
+      writeFile: async (filePath, content) => {
+        writtenFiles[filePath] = content;
       },
       stdout: {
         write: (message) => {
@@ -27,7 +33,7 @@ function createIo(files) {
         },
       },
     },
-    output: () => ({ stdout, stderr }),
+    output: () => ({ stdout, stderr, writtenFiles }),
   };
 }
 
@@ -91,4 +97,57 @@ test("CLI exits 2 for read failures and usage errors", async () => {
   const usage = createIo({});
   assert.equal(await runCli(["lint"], usage.io), 2);
   assert.match(usage.output().stderr, /lint requires exactly one DESIGN\.md file path/);
+});
+
+test("CLI export writes default css output next to input file", async () => {
+  const harness = createIo({ "docs/DESIGN.md": validDesignMd });
+
+  const exitCode = await runCli(["export", "--format", "css", "docs/DESIGN.md"], harness.io);
+  const output = harness.output();
+
+  assert.equal(exitCode, 0);
+  assert.match(output.stdout, /wrote docs\/design-tokens\.css/);
+  assert.match(output.writtenFiles["docs/design-tokens.css"], /:root \{/);
+  assert.equal(output.stderr, "");
+});
+
+test("CLI export writes default tailwind output", async () => {
+  const harness = createIo({ "DESIGN.md": validDesignMd });
+
+  const exitCode = await runCli(["export", "--format", "css-tailwind", "DESIGN.md"], harness.io);
+  const output = harness.output();
+
+  assert.equal(exitCode, 0);
+  assert.match(output.stdout, /wrote theme\.css/);
+  assert.match(output.writtenFiles["theme.css"], /@theme static \{/);
+});
+
+test("CLI export protects existing output unless force is set", async () => {
+  const blocked = createIo({ "DESIGN.md": validDesignMd }, { "custom.css": "old" });
+
+  assert.equal(
+    await runCli(["export", "--format", "css", "--out", "custom.css", "DESIGN.md"], blocked.io),
+    2,
+  );
+  assert.match(blocked.output().stderr, /already exists/);
+  assert.equal(blocked.output().writtenFiles["custom.css"], undefined);
+
+  const forced = createIo({ "DESIGN.md": validDesignMd }, { "custom.css": "old" });
+  assert.equal(
+    await runCli(["export", "--format", "css", "--out", "custom.css", "--force", "DESIGN.md"], forced.io),
+    0,
+  );
+  assert.match(forced.output().writtenFiles["custom.css"], /:root \{/);
+});
+
+test("CLI export exits 1 for blocking diagnostics and writes no file", async () => {
+  const source = validDesignMd.replace('primary: "#1A1C1E"', 'primary: "red"');
+  const harness = createIo({ "DESIGN.md": source });
+
+  const exitCode = await runCli(["export", "--format", "css", "DESIGN.md"], harness.io);
+  const output = harness.output();
+
+  assert.equal(exitCode, 1);
+  assert.match(output.stderr, /error invalid-color Colors\.primary:/);
+  assert.equal(output.writtenFiles["design-tokens.css"], undefined);
 });

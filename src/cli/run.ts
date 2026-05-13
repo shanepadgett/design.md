@@ -1,9 +1,11 @@
 import { helpText, parseCliArgs } from "./args.js";
-import { runLintCommand, type LintCommandIO } from "./commands/lint.js";
+import { runExportCommand } from "./commands/export.js";
+import { runLintCommand } from "./commands/lint.js";
+import type { CommandIO } from "./io.js";
 
 const cliVersion = "0.0.0";
 
-export type CliIO = LintCommandIO;
+export type CliIO = CommandIO;
 
 export async function runCli(args: readonly string[], io: CliIO): Promise<number> {
   const command = parseCliArgs(args);
@@ -20,5 +22,7 @@ export async function runCli(args: readonly string[], io: CliIO): Promise<number
       return 2;
     case "lint":
       return runLintCommand(command, io);
+    case "export":
+      return runExportCommand(command, io);
   }
 }
