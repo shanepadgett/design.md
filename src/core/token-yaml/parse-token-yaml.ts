@@ -431,6 +431,20 @@ function parseScalarValue(
       message: "Booleans and null are not supported in Token YAML.",
       span,
     });
+  } else if (isBlockScalarHeader(trimmed)) {
+    state.diagnostics.push({
+      severity: "error",
+      rule: "unsupported-yaml-feature",
+      message: "Block scalar values are not supported in Token YAML.",
+      span,
+    });
+  } else if (isAnchorAliasOrTag(trimmed)) {
+    state.diagnostics.push({
+      severity: "error",
+      rule: "unsupported-yaml-feature",
+      message: "YAML anchors, aliases, and tags are not supported.",
+      span,
+    });
   } else if (/^[\[{]/.test(trimmed)) {
     state.diagnostics.push({
       severity: "error",
@@ -645,6 +659,14 @@ function skipBlankLines(state: ParserState): void {
 
 function textAfterIndent(line: SourceLine): string {
   return line.text.slice(/^ */.exec(line.text)?.[0].length ?? 0);
+}
+
+function isBlockScalarHeader(value: string): boolean {
+  return /^[|>][+-]?\d*$/.test(value);
+}
+
+function isAnchorAliasOrTag(value: string): boolean {
+  return /^[&*!]/.test(value);
 }
 
 function emptyMap(state: ParserState, line: SourceLine | undefined): TokenMap {

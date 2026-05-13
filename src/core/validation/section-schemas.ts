@@ -27,12 +27,24 @@ const componentProperties = new Set([
   "transitionEasing",
 ]);
 
+const textStyleFields = [
+  "fontFamily",
+  "fontSize",
+  "fontWeight",
+  "lineHeight",
+  "letterSpacing",
+  "fontFeature",
+  "fontVariation",
+] as const;
+
 export function validateSectionSchemas(
   sectionTokens: readonly ParsedSectionToken[],
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
 
   for (const sectionToken of sectionTokens) {
+    validateKeyStyles(sectionToken, diagnostics);
+
     switch (sectionToken.definition.group) {
       case "metadata":
         validateMetadata(sectionToken, diagnostics);
@@ -109,8 +121,9 @@ function validateTypography(sectionToken: ParsedSectionToken, diagnostics: Diagn
   }
 
   const fontFamily = findEntry(root, "fontFamily");
-  if (fontFamily?.value.kind === "map") {
-    validateLeaves(sectionToken, diagnostics, fontFamily.value, ["fontFamily"], (scalar, path) => {
+  const fontFamilyMap = validateMapEntry(sectionToken, diagnostics, fontFamily, "Typography.fontFamily");
+  if (fontFamilyMap !== undefined) {
+    validateLeaves(sectionToken, diagnostics, fontFamilyMap, ["fontFamily"], (scalar, path) => {
       if (scalar.valueType !== "string") {
         addError(sectionToken, diagnostics, "invalid-value-type", `${path} must be a string or token reference.`, scalar, path);
       }
@@ -118,8 +131,9 @@ function validateTypography(sectionToken: ParsedSectionToken, diagnostics: Diagn
   }
 
   const measure = findEntry(root, "measure");
-  if (measure?.value.kind === "map") {
-    validateLeaves(sectionToken, diagnostics, measure.value, ["measure"], (scalar, path) => {
+  const measureMap = validateMapEntry(sectionToken, diagnostics, measure, "Typography.measure");
+  if (measureMap !== undefined) {
+    validateLeaves(sectionToken, diagnostics, measureMap, ["measure"], (scalar, path) => {
       validateDimensionScalar(sectionToken, diagnostics, scalar, path.split(".").slice(1));
     });
   }
@@ -135,16 +149,6 @@ function validateTextStyles(
   diagnostics: Diagnostic[],
   textMap: TokenMap,
 ): void {
-  const allowedFields = [
-    "fontFamily",
-    "fontSize",
-    "fontWeight",
-    "lineHeight",
-    "letterSpacing",
-    "fontFeature",
-    "fontVariation",
-  ];
-
   for (const style of textMap.entries) {
     if (style.value.kind !== "map") {
       addError(sectionToken, diagnostics, "invalid-value-type", `Typography text style '${style.key}' must be a map.`, style.value, `Typography.text.${style.key}`);
@@ -155,7 +159,7 @@ function validateTextStyles(
       requireEntry(sectionToken, diagnostics, style.value, required, `Typography.text.${style.key}`);
     }
 
-    warnUnknownMapKeys(sectionToken, diagnostics, style.value, allowedFields, `Typography.text.${style.key}`);
+    warnUnknownMapKeys(sectionToken, diagnostics, style.value, textStyleFields, `Typography.text.${style.key}`);
 
     for (const field of style.value.entries) {
       const path = `Typography.text.${style.key}.${field.key}`;
@@ -180,26 +184,25 @@ function validateLayout(sectionToken: ParsedSectionToken, diagnostics: Diagnosti
   warnUnknownKeys(sectionToken, diagnostics, ["spacing", "container", "grid", "breakpoint"]);
 
   const spacing = requireEntry(sectionToken, diagnostics, root, "spacing");
-  if (spacing !== undefined) {
-    if (spacing.value.kind !== "map") {
-      addError(sectionToken, diagnostics, "invalid-value-type", "Layout.spacing must be a map.", spacing.value, "Layout.spacing");
-    } else {
-      validateDimensionMap(sectionToken, diagnostics, spacing.value, ["spacing"], true);
-      warnMissingAnchors(sectionToken, diagnostics, spacing.value, ["sm", "md", "lg"], "Layout.spacing");
-    }
+  const spacingMap = validateMapEntry(sectionToken, diagnostics, spacing, "Layout.spacing");
+  if (spacingMap !== undefined) {
+    validateDimensionMap(sectionToken, diagnostics, spacingMap, ["spacing"], true);
+    warnMissingAnchors(sectionToken, diagnostics, spacingMap, ["sm", "md", "lg"], "Layout.spacing");
   }
 
   for (const key of ["container", "breakpoint"]) {
     const entry = findEntry(root, key);
-    if (entry?.value.kind === "map") {
-      validateDimensionMap(sectionToken, diagnostics, entry.value, [key], false);
+    const map = validateMapEntry(sectionToken, diagnostics, entry, `Layout.${key}`);
+    if (map !== undefined) {
+      validateDimensionMap(sectionToken, diagnostics, map, [key], false);
     }
   }
 
   const grid = findEntry(root, "grid");
-  if (grid?.value.kind === "map") {
-    warnUnknownMapKeys(sectionToken, diagnostics, grid.value, ["columns", "gutter"], "Layout.grid");
-    for (const entry of grid.value.entries) {
+  const gridMap = validateMapEntry(sectionToken, diagnostics, grid, "Layout.grid");
+  if (gridMap !== undefined) {
+    warnUnknownMapKeys(sectionToken, diagnostics, gridMap, ["columns", "gutter"], "Layout.grid");
+    for (const entry of gridMap.entries) {
       if (entry.value.kind !== "scalar") {
         addError(sectionToken, diagnostics, "invalid-value-type", `Layout.grid.${entry.key} must be a scalar value.`, entry.value, `Layout.grid.${entry.key}`);
       } else if (entry.key === "columns") {
@@ -216,8 +219,9 @@ function validateElevation(sectionToken: ParsedSectionToken, diagnostics: Diagno
   warnUnknownKeys(sectionToken, diagnostics, ["shadow", "zIndex"]);
 
   const shadow = findEntry(root, "shadow");
-  if (shadow?.value.kind === "map") {
-    validateLeaves(sectionToken, diagnostics, shadow.value, ["shadow"], (scalar, path) => {
+  const shadowMap = validateMapEntry(sectionToken, diagnostics, shadow, "Elevation.shadow");
+  if (shadowMap !== undefined) {
+    validateLeaves(sectionToken, diagnostics, shadowMap, ["shadow"], (scalar, path) => {
       if (scalar.valueType !== "string") {
         addError(sectionToken, diagnostics, "invalid-value-type", `${path} must be a string or token reference.`, scalar, path);
       }
@@ -225,8 +229,9 @@ function validateElevation(sectionToken: ParsedSectionToken, diagnostics: Diagno
   }
 
   const zIndex = findEntry(root, "zIndex");
-  if (zIndex?.value.kind === "map") {
-    validateLeaves(sectionToken, diagnostics, zIndex.value, ["zIndex"], (scalar, path) => {
+  const zIndexMap = validateMapEntry(sectionToken, diagnostics, zIndex, "Elevation.zIndex");
+  if (zIndexMap !== undefined) {
+    validateLeaves(sectionToken, diagnostics, zIndexMap, ["zIndex"], (scalar, path) => {
       validateNumberOrReference(sectionToken, diagnostics, scalar, path);
     });
   }
@@ -237,23 +242,22 @@ function validateShapes(sectionToken: ParsedSectionToken, diagnostics: Diagnosti
   warnUnknownKeys(sectionToken, diagnostics, ["radius", "borderWidth", "borderStyle"]);
 
   const radius = requireEntry(sectionToken, diagnostics, root, "radius");
-  if (radius !== undefined) {
-    if (radius.value.kind !== "map") {
-      addError(sectionToken, diagnostics, "invalid-value-type", "Shapes.radius must be a map.", radius.value, "Shapes.radius");
-    } else {
-      validateDimensionMap(sectionToken, diagnostics, radius.value, ["radius"], true);
-      warnMissingAnchors(sectionToken, diagnostics, radius.value, ["none", "sm", "md", "full"], "Shapes.radius");
-    }
+  const radiusMap = validateMapEntry(sectionToken, diagnostics, radius, "Shapes.radius");
+  if (radiusMap !== undefined) {
+    validateDimensionMap(sectionToken, diagnostics, radiusMap, ["radius"], true);
+    warnMissingAnchors(sectionToken, diagnostics, radiusMap, ["none", "sm", "md", "full"], "Shapes.radius");
   }
 
   const borderWidth = findEntry(root, "borderWidth");
-  if (borderWidth?.value.kind === "map") {
-    validateDimensionMap(sectionToken, diagnostics, borderWidth.value, ["borderWidth"], false);
+  const borderWidthMap = validateMapEntry(sectionToken, diagnostics, borderWidth, "Shapes.borderWidth");
+  if (borderWidthMap !== undefined) {
+    validateDimensionMap(sectionToken, diagnostics, borderWidthMap, ["borderWidth"], false);
   }
 
   const borderStyle = findEntry(root, "borderStyle");
-  if (borderStyle?.value.kind === "map") {
-    validateLeaves(sectionToken, diagnostics, borderStyle.value, ["borderStyle"], (scalar, path) => {
+  const borderStyleMap = validateMapEntry(sectionToken, diagnostics, borderStyle, "Shapes.borderStyle");
+  if (borderStyleMap !== undefined) {
+    validateLeaves(sectionToken, diagnostics, borderStyleMap, ["borderStyle"], (scalar, path) => {
       if (scalar.valueType !== "string" || (!isWholeReference(String(scalar.value)) && !isBorderStyle(String(scalar.value)))) {
         addError(sectionToken, diagnostics, "invalid-border-style", `${path} must be a CSS border-style keyword or token reference.`, scalar, path);
       }
@@ -276,12 +280,14 @@ function validateComponents(sectionToken: ParsedSectionToken, diagnostics: Diagn
 
     warnUnknownMapKeys(sectionToken, diagnostics, component.value, ["base", "variants"], `Components.${component.key}`);
 
-    if (base?.value.kind === "map") {
-      validateComponentProperties(sectionToken, diagnostics, base.value, `Components.${component.key}.base`);
+    const baseMap = validateMapEntry(sectionToken, diagnostics, base, `Components.${component.key}.base`);
+    if (baseMap !== undefined) {
+      validateComponentProperties(sectionToken, diagnostics, baseMap, `Components.${component.key}.base`);
     }
 
-    if (variants?.value.kind === "map") {
-      for (const axis of variants.value.entries) {
+    const variantsMap = validateMapEntry(sectionToken, diagnostics, variants, `Components.${component.key}.variants`);
+    if (variantsMap !== undefined) {
+      for (const axis of variantsMap.entries) {
         if (axis.value.kind !== "map") {
           addError(sectionToken, diagnostics, "invalid-value-type", `Variant axis '${axis.key}' must be a map.`, axis.value, `Components.${component.key}.variants.${axis.key}`);
           continue;
@@ -321,38 +327,44 @@ function validateIconography(sectionToken: ParsedSectionToken, diagnostics: Diag
   const root = sectionToken.parsed.root;
   warnUnknownKeys(sectionToken, diagnostics, ["library", "style", "strokeWidth", "grid", "size", "color"]);
   const library = requireEntry(sectionToken, diagnostics, root, "library");
-  if (library?.value.kind === "scalar" && library.value.valueType !== "string") {
-    addError(sectionToken, diagnostics, "invalid-value-type", "Iconography.library must be a string.", library.value, "Iconography.library");
+  const libraryScalar = validateScalarEntry(sectionToken, diagnostics, library, "Iconography.library");
+  if (libraryScalar !== undefined && libraryScalar.valueType !== "string") {
+    addError(sectionToken, diagnostics, "invalid-value-type", "Iconography.library must be a string.", libraryScalar, "Iconography.library");
   }
 
   const strokeWidth = findEntry(root, "strokeWidth");
-  if (strokeWidth?.value.kind === "scalar") {
-    validateNumberOrReference(sectionToken, diagnostics, strokeWidth.value, "Iconography.strokeWidth");
+  const strokeWidthScalar = validateScalarEntry(sectionToken, diagnostics, strokeWidth, "Iconography.strokeWidth");
+  if (strokeWidthScalar !== undefined) {
+    validateNumberOrReference(sectionToken, diagnostics, strokeWidthScalar, "Iconography.strokeWidth");
   }
 
   const grid = findEntry(root, "grid");
-  if (grid?.value.kind === "scalar") {
-    validateDimensionScalar(sectionToken, diagnostics, grid.value, ["grid"]);
+  const gridScalar = validateScalarEntry(sectionToken, diagnostics, grid, "Iconography.grid");
+  if (gridScalar !== undefined) {
+    validateDimensionScalar(sectionToken, diagnostics, gridScalar, ["grid"]);
   }
 
   const size = findEntry(root, "size");
-  if (size?.value.kind === "map") {
-    validateDimensionMap(sectionToken, diagnostics, size.value, ["size"], false);
+  const sizeMap = validateMapEntry(sectionToken, diagnostics, size, "Iconography.size");
+  if (sizeMap !== undefined) {
+    validateDimensionMap(sectionToken, diagnostics, sizeMap, ["size"], false);
   }
 
   const style = findEntry(root, "style");
-  if (style?.value.kind === "scalar" && style.value.valueType === "string") {
-    const value = String(style.value.value);
+  const styleScalar = validateScalarEntry(sectionToken, diagnostics, style, "Iconography.style");
+  if (styleScalar !== undefined && styleScalar.valueType === "string") {
+    const value = String(styleScalar.value);
     if (!isWholeReference(value) && !["outlined", "filled", "rounded", "sharp", "duotone"].includes(value)) {
-      addWarning(sectionToken, diagnostics, "unknown-icon-style", `Unknown icon style '${value}' is preserved.`, style.value, "Iconography.style");
+      addWarning(sectionToken, diagnostics, "unknown-icon-style", `Unknown icon style '${value}' is preserved.`, styleScalar, "Iconography.style");
     }
   }
 
   const color = findEntry(root, "color");
-  if (color?.value.kind === "scalar") {
-    const value = String(color.value.value);
-    if (color.value.valueType !== "string" || !isColorOrReference(value)) {
-      addError(sectionToken, diagnostics, "invalid-color", "Iconography.color must be a supported color string or token reference.", color.value, "Iconography.color");
+  const colorScalar = validateScalarEntry(sectionToken, diagnostics, color, "Iconography.color");
+  if (colorScalar !== undefined) {
+    const value = String(colorScalar.value);
+    if (colorScalar.valueType !== "string" || !isColorOrReference(value)) {
+      addError(sectionToken, diagnostics, "invalid-color", "Iconography.color must be a supported color string or token reference.", colorScalar, "Iconography.color");
     }
   }
 }
@@ -362,25 +374,28 @@ function validateMotion(sectionToken: ParsedSectionToken, diagnostics: Diagnosti
   warnUnknownKeys(sectionToken, diagnostics, ["duration", "easing", "reducedMotion"]);
 
   const duration = findEntry(root, "duration");
-  if (duration?.value.kind === "map") {
-    validateDurationMap(sectionToken, diagnostics, duration.value, ["duration"]);
+  const durationMap = validateMapEntry(sectionToken, diagnostics, duration, "Motion.duration");
+  if (durationMap !== undefined) {
+    validateDurationMap(sectionToken, diagnostics, durationMap, ["duration"]);
   }
 
   const reducedMotion = findEntry(root, "reducedMotion");
-  if (reducedMotion?.value.kind === "map") {
-    validateDurationMap(sectionToken, diagnostics, reducedMotion.value, ["reducedMotion"]);
+  const reducedMotionMap = validateMapEntry(sectionToken, diagnostics, reducedMotion, "Motion.reducedMotion");
+  if (reducedMotionMap !== undefined) {
+    validateDurationMap(sectionToken, diagnostics, reducedMotionMap, ["reducedMotion"]);
   }
 
   const easing = findEntry(root, "easing");
-  if (easing?.value.kind === "map") {
-    validateLeaves(sectionToken, diagnostics, easing.value, ["easing"], (scalar, path) => {
+  const easingMap = validateMapEntry(sectionToken, diagnostics, easing, "Motion.easing");
+  if (easingMap !== undefined) {
+    validateLeaves(sectionToken, diagnostics, easingMap, ["easing"], (scalar, path) => {
       if (scalar.valueType !== "string" || (!isWholeReference(String(scalar.value)) && !isEasing(String(scalar.value)))) {
         addError(sectionToken, diagnostics, "invalid-easing", `${path} must be a CSS easing keyword/function or token reference.`, scalar, path);
       }
     });
   }
 
-  warnReducedMotion(sectionToken, diagnostics, duration?.value, reducedMotion?.value);
+  warnReducedMotion(sectionToken, diagnostics, durationMap, reducedMotionMap);
 }
 
 function warnReducedMotion(
@@ -407,6 +422,121 @@ function warnReducedMotion(
       addWarning(sectionToken, diagnostics, "missing-reduced-motion", `Motion duration '${entry.key}' should define a same-key reducedMotion value.`, entry.value, `Motion.duration.${entry.key}`);
     }
   }
+}
+
+function validateKeyStyles(sectionToken: ParsedSectionToken, diagnostics: Diagnostic[]): void {
+  validateMapKeyStyles(sectionToken, diagnostics, sectionToken.parsed.root, []);
+}
+
+function validateMapKeyStyles(
+  sectionToken: ParsedSectionToken,
+  diagnostics: Diagnostic[],
+  map: TokenMap,
+  parentSegments: string[],
+): void {
+  for (const entry of map.entries) {
+    if (
+      !isStructuralKey(sectionToken, parentSegments, entry.key)
+      && !isRecommendedKey(entry)
+    ) {
+      diagnostics.push({
+        severity: "warning",
+        rule: "key-style",
+        path: [sectionToken.section.name, ...parentSegments, entry.key].join("."),
+        message: `Key '${entry.key}' should use kebab-case or a double-quoted numeric scale key.`,
+        span: entry.keySpan,
+      });
+    }
+
+    if (entry.value.kind === "map") {
+      validateMapKeyStyles(
+        sectionToken,
+        diagnostics,
+        entry.value,
+        [...parentSegments, entry.key],
+      );
+    }
+  }
+}
+
+function isStructuralKey(
+  sectionToken: ParsedSectionToken,
+  parentSegments: readonly string[],
+  key: string,
+): boolean {
+  switch (sectionToken.definition.group) {
+    case "metadata":
+      return parentSegments.length === 0
+        && ["themes", "defaultTheme"].includes(key);
+    case "typography":
+      return isTypographyStructuralKey(parentSegments, key);
+    case "layout":
+      return isLayoutStructuralKey(parentSegments, key);
+    case "elevation":
+      return parentSegments.length === 0
+        && ["shadow", "zIndex"].includes(key);
+    case "shapes":
+      return parentSegments.length === 0
+        && ["radius", "borderWidth", "borderStyle"].includes(key);
+    case "components":
+      return isComponentStructuralKey(parentSegments, key);
+    case "iconography":
+      return parentSegments.length === 0
+        && ["library", "style", "strokeWidth", "grid", "size", "color"].includes(key);
+    case "motion":
+      return parentSegments.length === 0
+        && ["duration", "easing", "reducedMotion"].includes(key);
+    case "colors":
+    case undefined:
+      return false;
+  }
+
+  return false;
+}
+
+function isTypographyStructuralKey(parentSegments: readonly string[], key: string): boolean {
+  if (parentSegments.length === 0) {
+    return ["fontFamily", "baseFontSize", "measure", "text"].includes(key);
+  }
+
+  return parentSegments.length === 2
+    && parentSegments[0] === "text"
+    && textStyleFields.includes(key as (typeof textStyleFields)[number]);
+}
+
+function isLayoutStructuralKey(parentSegments: readonly string[], key: string): boolean {
+  if (parentSegments.length === 0) {
+    return ["spacing", "container", "grid", "breakpoint"].includes(key);
+  }
+
+  return parentSegments.length === 1
+    && parentSegments[0] === "grid"
+    && ["columns", "gutter"].includes(key);
+}
+
+function isComponentStructuralKey(parentSegments: readonly string[], key: string): boolean {
+  if (parentSegments.length === 1) {
+    return key === "base" || key === "variants";
+  }
+
+  const isBaseProperty = parentSegments.length === 2
+    && parentSegments[1] === "base";
+  const isVariantProperty = parentSegments.length === 4
+    && parentSegments[1] === "variants";
+
+  return (isBaseProperty || isVariantProperty) && componentProperties.has(key);
+}
+
+function isRecommendedKey(entry: TokenMapEntry): boolean {
+  if (entry.quotedKey && /^\d+$/.test(entry.key)) {
+    return true;
+  }
+
+  if (!entry.quotedKey && /^-?\d+(?:\.\d+)?$/.test(entry.key)) {
+    return true;
+  }
+
+  return /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(entry.key);
 }
 
 function validateDimensionMap(
@@ -495,6 +625,42 @@ function validateLeaves(
   for (const entry of node.entries) {
     validateLeaves(sectionToken, diagnostics, entry.value, [...segments, entry.key], validate);
   }
+}
+
+function validateMapEntry(
+  sectionToken: ParsedSectionToken,
+  diagnostics: Diagnostic[],
+  entry: TokenMapEntry | undefined,
+  path: string,
+): TokenMap | undefined {
+  if (entry === undefined) {
+    return undefined;
+  }
+
+  if (entry.value.kind !== "map") {
+    addError(sectionToken, diagnostics, "invalid-value-type", `${path} must be a map.`, entry.value, path);
+    return undefined;
+  }
+
+  return entry.value;
+}
+
+function validateScalarEntry(
+  sectionToken: ParsedSectionToken,
+  diagnostics: Diagnostic[],
+  entry: TokenMapEntry | undefined,
+  path: string,
+): TokenScalar | undefined {
+  if (entry === undefined) {
+    return undefined;
+  }
+
+  if (entry.value.kind !== "scalar") {
+    addError(sectionToken, diagnostics, "invalid-value-type", `${path} must be a scalar value.`, entry.value, path);
+    return undefined;
+  }
+
+  return entry.value;
 }
 
 function requireEntry(

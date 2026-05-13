@@ -10,6 +10,7 @@ import type {
   TokenPrimitive,
   TokenScalar,
 } from "../token-yaml/types.js";
+import { validateContrast } from "./contrast.js";
 import type { DesignSystem, ResolvedToken } from "./types.js";
 
 interface ThemeConfig {
@@ -59,6 +60,7 @@ export function resolveDesignSystem(
 
   validateTokenReferences(state);
   validateProseReferencesAndValues(state);
+  diagnostics.push(...validateContrast(state.tokens, state.themes));
 
   const designSystem: DesignSystem = {
     name: document.title?.text ?? "",
