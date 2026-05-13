@@ -1,23 +1,43 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { lintDesignMd } from "../dist/index.js";
+import type { DesignMdLintOptions } from "../dist/index.js";
+import { validateContrast } from "../dist/core/resolve/contrast.js";
+import type { ResolvedToken, SourceSpan } from "../dist/index.js";
 import {
   replaceColorsYaml,
   replaceTypographyYaml,
   validDesignMd,
   withComponentsYaml,
   withMetadata,
-} from "./fixtures.mjs";
+} from "./fixtures.ts";
 
-function lint(source, options = {}) {
+type DiagnosticSeverity = "error" | "warning";
+type DiagnosticResult = {
+  diagnostics: Array<{ rule: string; severity: DiagnosticSeverity; path?: string }>;
+};
+type ContrastCase = [backgroundPath: string, foregroundPath: string, colors: string];
+type TokenValue = ResolvedToken["value"];
+
+const span: SourceSpan = {
+  start: { line: 1, column: 1, offset: 0 },
+  end: { line: 1, column: 1, offset: 0 },
+};
+
+function lint(source: string, options: DesignMdLintOptions = {}) {
   return lintDesignMd(source, { filePath: "DESIGN.md", ...options });
 }
 
-function yaml(...lines) {
+function yaml(...lines: string[]): string {
   return lines.join("\n");
 }
 
-function assertDiagnostic(result, rule, severity, path) {
+function assertDiagnostic(
+  result: DiagnosticResult,
+  rule: string,
+  severity: DiagnosticSeverity,
+  path?: string,
+) {
   assert.ok(
     result.diagnostics.some(
       (diagnostic) =>
@@ -29,12 +49,29 @@ function assertDiagnostic(result, rule, severity, path) {
   );
 }
 
-function assertNoDiagnostic(result, rule) {
+function assertNoDiagnostic(result: DiagnosticResult, rule: string) {
   assert.equal(
     result.diagnostics.some((diagnostic) => diagnostic.rule === rule),
     false,
     `Expected no diagnostic '${rule}'. Got: ${result.diagnostics.map((diagnostic) => diagnostic.rule).join(", ")}`,
   );
+}
+
+function token(path: string, value: TokenValue): ResolvedToken {
+  const group = path.split(".")[0];
+  assert.ok(group !== undefined);
+
+  return {
+    path,
+    group: group as ResolvedToken["group"],
+    value,
+    references: [],
+    span,
+  };
+}
+
+function contrast(tokens: ResolvedToken[], themes: string[] = []) {
+  return validateContrast(new Map(tokens.map((item) => [item.path, item])), themes);
 }
 
 test("embedded token references validate missing and non-primitive paths", () => {
@@ -188,7 +225,7 @@ test("hard-coded prose warnings cover colors, dimensions, times, and skip code f
 });
 
 test("contrast checks every semantic color pair", () => {
-  const cases = [
+  const cases: ContrastCase[] = [
     [
       "colors.surface",
       "colors.on-surface",
@@ -306,6 +343,91 @@ test("contrast parses supported color formats", () => {
     assertNoDiagnostic(result, "invalid-color");
     assertNoDiagnostic(result, "contrast");
   }
+});
+
+test("contrast skips unresolved, cyclic, and non-color token values", () => {
+  assert.equal(
+    contrast([
+      token("colors.surface", "{colors.on-surface}"),
+      token("colors.on-surface", "{colors.surface}"),
+    ]).length,
+    0,
+  );
+
+  assert.equal(
+    contrast([
+      token("colors.surface", "rgb({colors.missing} 255 255)"),
+      token("colors.on-surface", "#000000"),
+    ]).length,
+    0,
+  );
+
+  assert.equal(
+    contrast([token("colors.surface", { light: "#ffffff" }), token("colors.on-surface", "#000000")])
+      .length,
+    0,
+  );
+
+  assert.equal(
+    contrast([
+      token("components.button.base.backgroundColor", "#ffffff"),
+      token("components.button.base.padding", "1rem"),
+    ]).length,
+    0,
+  );
+});
+
+test("contrast covers color parser variants and invalid forms", () => {
+  const noDiagnostics = contrast([
+    token("colors.surface", "rgb(100% 100% 100% / 50%)"),
+    token("colors.background", "#000000"),
+    token("colors.on-surface", "hsl(0.5turn 0% 0% / 100%)"),
+    token("colors.primary", "oklab(100% 0 0 / 1)"),
+    token("colors.on-primary", "#000000"),
+    token("colors.secondary", "oklch(100% 0 3.14159rad)"),
+    token("colors.on-secondary", "#000000"),
+    token("colors.error", "color(display-p3 100% 100% 100% / 1)"),
+    token("colors.on-error", "#000000"),
+  ]);
+
+  assert.equal(noDiagnostics.length, 0);
+
+  assert.equal(
+    contrast([
+      token("colors.surface", "#ffff"),
+      token("colors.on-surface", "not-a-color"),
+      token("colors.primary", "rgb(255 nope 255)"),
+      token("colors.on-primary", "#000000"),
+      token("colors.secondary", "hsl(0 0 0)"),
+      token("colors.on-secondary", "#000000"),
+      token("colors.error", "color(srgb 1 1 1)"),
+      token("colors.on-error", "#000000"),
+    ]).length,
+    0,
+  );
+
+  assert.equal(
+    contrast([
+      token("colors.surface", "oklab(100% 0)"),
+      token("colors.on-surface", "#000000"),
+      token("colors.primary", "oklch(100% nope 0)"),
+      token("colors.on-primary", "#000000"),
+      token("colors.secondary", "rgba(255 255 255 / nope)"),
+      token("colors.on-secondary", "#000000"),
+      token("colors.error", "color(display-p3 1 1 nope)"),
+      token("colors.on-error", "#000000"),
+    ]).length,
+    0,
+  );
+});
+
+test("contrast covers HSL hue sectors in component colors", () => {
+  const tokens = [0, 60, 120, 180, 240, 300].flatMap((hue, index) => [
+    token(`components.swatch${index}.base.backgroundColor`, `hsl(${hue} 100% 100%)`),
+    token(`components.swatch${index}.base.textColor`, "#000000"),
+  ]);
+
+  assert.equal(contrast(tokens).length, 0);
 });
 
 test("lint API returns design system and accurate summary counts", () => {

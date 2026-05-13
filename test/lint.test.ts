@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { lintDesignMd } from "../dist/index.js";
+import type { DesignMdLintOptions } from "../dist/index.js";
 import {
   appendSection,
   colorsYaml,
@@ -11,13 +12,19 @@ import {
   replaceTypographyYaml,
   validDesignMd,
   withMetadata,
-} from "./fixtures.mjs";
+} from "./fixtures.ts";
 
-function lint(source, options = {}) {
+type DiagnosticSeverity = "error" | "warning";
+type DiagnosticResult = {
+  diagnostics: Array<{ rule: string; severity: DiagnosticSeverity }>;
+};
+type RuleCase = [rule: string, yaml: string];
+
+function lint(source: string, options: DesignMdLintOptions = {}) {
   return lintDesignMd(source, { filePath: "DESIGN.md", ...options });
 }
 
-function assertDiagnostic(result, rule, severity) {
+function assertDiagnostic(result: DiagnosticResult, rule: string, severity?: DiagnosticSeverity) {
   assert.ok(
     result.diagnostics.some(
       (diagnostic) =>
@@ -27,7 +34,7 @@ function assertDiagnostic(result, rule, severity) {
   );
 }
 
-function assertNoDiagnostic(result, rule) {
+function assertNoDiagnostic(result: DiagnosticResult, rule: string) {
   assert.equal(
     result.diagnostics.some((diagnostic) => diagnostic.rule === rule),
     false,
@@ -146,7 +153,7 @@ test("document structure ignores unknown sections and non-token yaml fences", ()
 });
 
 test("Token YAML syntax diagnostics cover strict subset failures", () => {
-  const cases = [
+  const cases: RuleCase[] = [
     ["invalid-token-yaml", `- "#1A1C1E"`],
     ["invalid-token-yaml", `primary "#1A1C1E"`],
     ["invalid-indentation", `primary:\n surface: "#F7F5F2"\non-surface: "#1A1C1E"`],
@@ -160,6 +167,9 @@ test("Token YAML syntax diagnostics cover strict subset failures", () => {
     ],
     ["unquoted-string", `primary: red\nsurface: "#F7F5F2"\non-surface: "#1A1C1E"`],
     ["single-quoted-string", `primary: '#1A1C1E'\nsurface: "#F7F5F2"\non-surface: "#1A1C1E"`],
+    ["invalid-string", `primary: "#1A1C1E" trailing\nsurface: "#F7F5F2"\non-surface: "#1A1C1E"`],
+    ["invalid-string", `primary: "#1A1C1E\nsurface: "#F7F5F2"\non-surface: "#1A1C1E"`],
+    ["invalid-string-escape", `primary: "#1A1C1E\\n"\nsurface: "#F7F5F2"\non-surface: "#1A1C1E"`],
     ["empty-leaf-value", `primary:\nsurface: "#F7F5F2"\non-surface: "#1A1C1E"`],
     ["empty-leaf-value", `primary: ""\nsurface: "#F7F5F2"\non-surface: "#1A1C1E"`],
     [
@@ -197,6 +207,22 @@ test("Token YAML syntax diagnostics cover strict subset failures", () => {
   for (const [rule, yaml] of cases) {
     assertDiagnostic(lint(replaceColorsYaml(yaml)), rule, "error");
   }
+});
+
+test("Token YAML accepts escaped double-quoted strings and quoted keys", () => {
+  const result = lint(
+    replaceTypographyYaml(`fontFamily:
+  sans: "Inter \\"UI\\""
+baseFontSize: "16px"
+text:
+  body:
+    fontFamily: "{typography.fontFamily.sans}"
+    fontSize: "1rem"
+    lineHeight: 1.5`),
+  );
+
+  assertNoDiagnostic(result, "invalid-string");
+  assertNoDiagnostic(result, "invalid-string-escape");
 });
 
 test("section schema diagnostics cover invalid values, unknown keys, and recommended anchors", () => {

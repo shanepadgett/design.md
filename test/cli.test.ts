@@ -2,37 +2,51 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import test from "node:test";
 import { runCli } from "../dist/cli/run.js";
-import { validDesignMd } from "./fixtures.mjs";
+import { validDesignMd } from "./fixtures.ts";
 
 const require = createRequire(import.meta.url);
-const packageJson = require("../package.json");
+const packageJson = require("../package.json") as { version: string };
 
-function createIo(files, existingFiles = {}) {
+type FileMap = Record<string, string>;
+interface IoOptions {
+  writeError?: Error;
+}
+
+function createIo(files: FileMap, existingFiles: FileMap = {}, options: IoOptions = {}) {
   let stdout = "";
   let stderr = "";
-  const writtenFiles = {};
+  const writtenFiles: FileMap = {};
 
   return {
     io: {
-      fileExists: async (filePath) =>
+      fileExists: async (filePath: string) =>
         Object.hasOwn(existingFiles, filePath) || Object.hasOwn(writtenFiles, filePath),
-      readFile: async (filePath) => {
+      readFile: async (filePath: string) => {
         if (!Object.hasOwn(files, filePath)) {
           throw new Error("ENOENT");
         }
 
-        return files[filePath];
+        const content = files[filePath];
+        if (content === undefined) {
+          throw new Error("ENOENT");
+        }
+
+        return content;
       },
-      writeFile: async (filePath, content) => {
+      writeFile: async (filePath: string, content: string) => {
+        if (options.writeError !== undefined) {
+          throw options.writeError;
+        }
+
         writtenFiles[filePath] = content;
       },
       stdout: {
-        write: (message) => {
+        write: (message: string | Uint8Array) => {
           stdout += String(message);
         },
       },
       stderr: {
-        write: (message) => {
+        write: (message: string | Uint8Array) => {
           stderr += String(message);
         },
       },
@@ -103,6 +117,92 @@ test("CLI exits 2 for read failures and usage errors", async () => {
   assert.match(usage.output().stderr, /lint requires exactly one DESIGN\.md file path/);
 });
 
+test("CLI help and usage errors cover command option parsing", async () => {
+  const help = createIo({});
+  assert.equal(await runCli([], help.io), 0);
+  assert.match(help.output().stdout, /Usage:/);
+
+  const commandHelp = createIo({});
+  assert.equal(await runCli(["export", "--help"], commandHelp.io), 0);
+  assert.match(commandHelp.output().stdout, /designmd export/);
+
+  const shortHelp = createIo({});
+  assert.equal(await runCli(["-h"], shortHelp.io), 0);
+  assert.match(shortHelp.output().stdout, /Usage:/);
+
+  const lintHelp = createIo({});
+  assert.equal(await runCli(["lint", "-h"], lintHelp.io), 0);
+  assert.match(lintHelp.output().stdout, /designmd lint/);
+
+  const migrateHelp = createIo({});
+  assert.equal(await runCli(["migrate", "-h"], migrateHelp.io), 0);
+  assert.match(migrateHelp.output().stdout, /designmd migrate/);
+
+  const unknownCommand = createIo({});
+  assert.equal(await runCli(["unknown"], unknownCommand.io), 2);
+  assert.match(unknownCommand.output().stderr, /Unknown command 'unknown'/);
+
+  const unknownLintOption = createIo({});
+  assert.equal(await runCli(["lint", "--wat", "DESIGN.md"], unknownLintOption.io), 2);
+  assert.match(unknownLintOption.output().stderr, /Unknown lint option '--wat'/);
+
+  const unknownMigrateOption = createIo({});
+  assert.equal(
+    await runCli(["migrate", "--out", "next.md", "legacy.md"], unknownMigrateOption.io),
+    2,
+  );
+  assert.match(unknownMigrateOption.output().stderr, /Unknown migrate option '--out'/);
+
+  const missingMigrateFile = createIo({});
+  assert.equal(await runCli(["migrate"], missingMigrateFile.io), 2);
+  assert.match(
+    missingMigrateFile.output().stderr,
+    /migrate requires exactly one legacy DESIGN\.md file path/,
+  );
+
+  const tooManyMigrateFiles = createIo({});
+  assert.equal(await runCli(["migrate", "one.md", "two.md"], tooManyMigrateFiles.io), 2);
+  assert.match(
+    tooManyMigrateFiles.output().stderr,
+    /migrate requires exactly one legacy DESIGN\.md file path/,
+  );
+});
+
+test("CLI export usage errors cover required option values and file count", async () => {
+  const missingFormat = createIo({});
+  assert.equal(await runCli(["export", "DESIGN.md"], missingFormat.io), 2);
+  assert.match(missingFormat.output().stderr, /export requires --format/);
+
+  const missingFormatValue = createIo({});
+  assert.equal(await runCli(["export", "--format", "DESIGN.md"], missingFormatValue.io), 2);
+  assert.match(missingFormatValue.output().stderr, /Unknown export format 'DESIGN\.md'/);
+
+  const invalidFormat = createIo({});
+  assert.equal(await runCli(["export", "--format", "json", "DESIGN.md"], invalidFormat.io), 2);
+  assert.match(invalidFormat.output().stderr, /Unknown export format 'json'/);
+
+  const missingOutValue = createIo({});
+  assert.equal(
+    await runCli(
+      ["export", "--format", "css", "--out", "--force", "DESIGN.md"],
+      missingOutValue.io,
+    ),
+    2,
+  );
+  assert.match(missingOutValue.output().stderr, /export --out requires a file path/);
+
+  const unknownExportOption = createIo({});
+  assert.equal(
+    await runCli(["export", "--format", "css", "--minify", "DESIGN.md"], unknownExportOption.io),
+    2,
+  );
+  assert.match(unknownExportOption.output().stderr, /Unknown export option '--minify'/);
+
+  const tooManyFiles = createIo({});
+  assert.equal(await runCli(["export", "--format", "css", "one.md", "two.md"], tooManyFiles.io), 2);
+  assert.match(tooManyFiles.output().stderr, /export requires exactly one DESIGN\.md file path/);
+});
+
 test("CLI prints package version", async () => {
   const harness = createIo({});
 
@@ -112,6 +212,10 @@ test("CLI prints package version", async () => {
   assert.equal(exitCode, 0);
   assert.equal(output.stdout, `${packageJson.version}\n`);
   assert.equal(output.stderr, "");
+
+  const short = createIo({});
+  assert.equal(await runCli(["-V"], short.io), 0);
+  assert.equal(short.output().stdout, `${packageJson.version}\n`);
 });
 
 test("CLI export writes default css output next to input file", async () => {
@@ -122,7 +226,7 @@ test("CLI export writes default css output next to input file", async () => {
 
   assert.equal(exitCode, 0);
   assert.match(output.stdout, /wrote docs\/design-tokens\.css/);
-  assert.match(output.writtenFiles["docs/design-tokens.css"], /:root \{/);
+  assert.match(output.writtenFiles["docs/design-tokens.css"] ?? "", /:root \{/);
   assert.equal(output.stderr, "");
 });
 
@@ -134,7 +238,7 @@ test("CLI export writes default tailwind output", async () => {
 
   assert.equal(exitCode, 0);
   assert.match(output.stdout, /wrote theme\.css/);
-  assert.match(output.writtenFiles["theme.css"], /@theme static \{/);
+  assert.match(output.writtenFiles["theme.css"] ?? "", /@theme static \{/);
 });
 
 test("CLI export protects existing output unless force is set", async () => {
@@ -155,7 +259,7 @@ test("CLI export protects existing output unless force is set", async () => {
     ),
     0,
   );
-  assert.match(forced.output().writtenFiles["custom.css"], /:root \{/);
+  assert.match(forced.output().writtenFiles["custom.css"] ?? "", /:root \{/);
 });
 
 test("CLI export exits 1 for blocking diagnostics and writes no file", async () => {
@@ -168,6 +272,24 @@ test("CLI export exits 1 for blocking diagnostics and writes no file", async () 
   assert.equal(exitCode, 1);
   assert.match(output.stderr, /error invalid-color Colors\.primary:/);
   assert.equal(output.writtenFiles["design-tokens.css"], undefined);
+});
+
+test("CLI export reports read and write failures", async () => {
+  const missing = createIo({});
+  assert.equal(await runCli(["export", "--format", "css", "missing.md"], missing.io), 2);
+  assert.match(missing.output().stderr, /failed to read 'missing\.md'/);
+
+  const writeFailure = createIo(
+    { "DESIGN.md": validDesignMd },
+    {},
+    { writeError: new Error("readonly filesystem") },
+  );
+  assert.equal(await runCli(["export", "--format", "css", "DESIGN.md"], writeFailure.io), 2);
+  assert.match(
+    writeFailure.output().stderr,
+    /failed to write 'design-tokens\.css': readonly filesystem/,
+  );
+  assert.deepEqual(writeFailure.output().writtenFiles, {});
 });
 
 const legacyDesignMd = `---
@@ -207,7 +329,22 @@ test("CLI migrate --write updates the input file", async () => {
 
   assert.equal(exitCode, 0);
   assert.match(output.stdout, /wrote legacy\.md/);
-  assert.match(output.writtenFiles["legacy.md"], /^# Legacy CLI\n/);
+  assert.match(output.writtenFiles["legacy.md"] ?? "", /^# Legacy CLI\n/);
+});
+
+test("CLI migrate reports write failures", async () => {
+  const harness = createIo(
+    { "legacy.md": legacyDesignMd },
+    {},
+    { writeError: new Error("disk full") },
+  );
+
+  const exitCode = await runCli(["migrate", "--write", "legacy.md"], harness.io);
+  const output = harness.output();
+
+  assert.equal(exitCode, 2);
+  assert.match(output.stderr, /failed to write 'legacy\.md': disk full/);
+  assert.deepEqual(output.writtenFiles, {});
 });
 
 test("CLI migrate exits 1 for non-legacy input", async () => {

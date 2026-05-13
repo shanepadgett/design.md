@@ -57,57 +57,57 @@ Use modest radius for controls and cards.
 ${fence(shapesYaml)}
 `;
 
-export function fence(yaml) {
+export function fence(yaml: string): string {
   return `\`\`\`yaml\n${yaml.trimEnd()}\n\`\`\``;
 }
 
-export function replaceColorsYaml(yaml, source = validDesignMd) {
+export function replaceColorsYaml(yaml: string, source = validDesignMd): string {
   return replaceYaml(source, colorsYaml, yaml);
 }
 
-export function replaceTypographyYaml(yaml, source = validDesignMd) {
+export function replaceTypographyYaml(yaml: string, source = validDesignMd): string {
   return replaceYaml(source, typographyYaml, yaml);
 }
 
-export function replaceLayoutYaml(yaml, source = validDesignMd) {
+export function replaceLayoutYaml(yaml: string, source = validDesignMd): string {
   return replaceYaml(source, layoutYaml, yaml);
 }
 
-export function replaceShapesYaml(yaml, source = validDesignMd) {
+export function replaceShapesYaml(yaml: string, source = validDesignMd): string {
   return replaceYaml(source, shapesYaml, yaml);
 }
 
-export function withElevationYaml(yaml, source = validDesignMd) {
+export function withElevationYaml(yaml: string, source = validDesignMd): string {
   return source.replace(
     "Use borders and tonal contrast for most hierarchy.\n\n## Shapes",
     `Use borders and tonal contrast for most hierarchy.\n\n${fence(yaml)}\n\n## Shapes`,
   );
 }
 
-export function withComponentsYaml(yaml, source = validDesignMd) {
+export function withComponentsYaml(yaml: string, source = validDesignMd): string {
   return appendTokenSection(source, "Components", "Components use semantic tokens.", yaml);
 }
 
-export function withIconographyYaml(yaml, source = validDesignMd) {
+export function withIconographyYaml(yaml: string, source = validDesignMd): string {
   return appendTokenSection(source, "Iconography", "Icons follow one visual style.", yaml);
 }
 
-export function withMotionYaml(yaml, source = validDesignMd) {
+export function withMotionYaml(yaml: string, source = validDesignMd): string {
   return appendTokenSection(source, "Motion", "Motion reinforces hierarchy.", yaml);
 }
 
-export function withMetadata(yaml, source = validDesignMd) {
+export function withMetadata(yaml: string, source = validDesignMd): string {
   return source.replace("# Acme Design\n\n", `# Acme Design\n\n## Metadata\n\n${fence(yaml)}\n\n`);
 }
 
-export function appendSection(source, section) {
+export function appendSection(source: string, section: string): string {
   return `${source.trimEnd()}\n\n${section.trimEnd()}\n`;
 }
 
-function appendTokenSection(source, name, prose, yaml) {
+function appendTokenSection(source: string, name: string, prose: string, yaml: string): string {
   return appendSection(source, `## ${name}\n\n${prose}\n\n${fence(yaml)}`);
 }
 
-function replaceYaml(source, oldYaml, newYaml) {
+function replaceYaml(source: string, oldYaml: string, newYaml: string): string {
   return source.replace(fence(oldYaml), fence(newYaml));
 }

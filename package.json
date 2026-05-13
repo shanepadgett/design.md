@@ -36,14 +36,16 @@
   },
   "scripts": {
     "build": "node ./node_modules/typescript/bin/tsc -p tsconfig.build.json",
+    "coverage": "npm --silent run build && node --test --experimental-test-coverage --test-coverage-include=\"dist/**/*.js\" --test-coverage-branches=90 test/*.test.ts",
+    "coverage:lcov": "npm --silent run build && node --test --experimental-test-coverage --test-coverage-include=\"dist/**/*.js\" --test-coverage-branches=90 --test-reporter=lcov --test-reporter-destination=lcov.info test/*.test.ts",
     "format:fix": "node ./node_modules/oxfmt/bin/oxfmt --write . \"!node_modules/**\" \"!dist/**\" \"!external/**\" \"!coverage/**\" \"!.pi/**\" > /dev/null",
     "format:check": "node ./node_modules/oxfmt/bin/oxfmt --list-different . \"!node_modules/**\" \"!dist/**\" \"!external/**\" \"!coverage/**\" \"!.pi/**\"",
     "lint:fix": "node ./node_modules/oxlint/bin/oxlint . --fix --format unix --ignore-pattern \"node_modules/**\" --ignore-pattern \"dist/**\" --ignore-pattern \"external/**\" --ignore-pattern \"coverage/**\" --ignore-pattern \".pi/**\" --no-error-on-unmatched-pattern",
     "lint:check": "node ./node_modules/oxlint/bin/oxlint . --format unix --ignore-pattern \"node_modules/**\" --ignore-pattern \"dist/**\" --ignore-pattern \"external/**\" --ignore-pattern \"coverage/**\" --ignore-pattern \".pi/**\" --deny-warnings --no-error-on-unmatched-pattern",
     "markdownlint:fix": "node ./node_modules/markdownlint-cli/markdownlint.js \"**/*.md\" --ignore \"node_modules/**\" --ignore \"dist/**\" --ignore \"external/**\" --ignore \"coverage/**\" --ignore \".pi/**\" --fix",
     "markdownlint:check": "node ./node_modules/markdownlint-cli/markdownlint.js \"**/*.md\" --ignore \"node_modules/**\" --ignore \"dist/**\" --ignore \"external/**\" --ignore \"coverage/**\" --ignore \".pi/**\"",
-    "test": "npm --silent run build && node --test test/*.test.mjs",
-    "typecheck": "node ./node_modules/typescript/bin/tsc --noEmit"
+    "test": "npm --silent run build && node --test test/*.test.ts",
+    "typecheck": "npm --silent run build && node ./node_modules/typescript/bin/tsc --noEmit -p tsconfig.test.json"
   },
   "devDependencies": {
     "@types/node": "24.12.4",

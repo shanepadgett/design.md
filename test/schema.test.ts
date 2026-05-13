@@ -13,13 +13,27 @@ import {
   withIconographyYaml,
   withMetadata,
   withMotionYaml,
-} from "./fixtures.mjs";
+} from "./fixtures.ts";
 
-function lint(source) {
+type DiagnosticSeverity = "error" | "warning";
+type DiagnosticResult = {
+  diagnostics: Array<{ rule: string; severity: DiagnosticSeverity; path?: string }>;
+};
+type RuleCase = [rule: string, yaml: string];
+type SourceCase = [rule: string, source: string];
+type SeverityCase = [rule: string, yaml: string, severity: DiagnosticSeverity];
+type PathCase = [rule: string, yaml: string, path: string];
+
+function lint(source: string) {
   return lintDesignMd(source, { filePath: "DESIGN.md" });
 }
 
-function assertDiagnostic(result, rule, severity, path) {
+function assertDiagnostic(
+  result: DiagnosticResult,
+  rule: string,
+  severity: DiagnosticSeverity,
+  path?: string,
+) {
   assert.ok(
     result.diagnostics.some(
       (diagnostic) =>
@@ -41,7 +55,7 @@ test("schema validation reports color minimum and preserves unknown token keys",
 });
 
 test("schema validation covers typography fields", () => {
-  const cases = [
+  const cases: RuleCase[] = [
     [
       "invalid-dimension",
       replaceTypographyYaml(`fontFamily:
@@ -104,7 +118,7 @@ text:
 });
 
 test("schema validation covers layout fields", () => {
-  const cases = [
+  const cases: RuleCase[] = [
     ["required-token", 'container:\n  md: "64rem"'],
     ["invalid-value-type", 'spacing: "1rem"'],
     ["token-minimum", "spacing:"],
@@ -124,7 +138,7 @@ test("schema validation covers layout fields", () => {
 });
 
 test("schema validation covers elevation fields", () => {
-  const cases = [
+  const cases: SeverityCase[] = [
     ["unknown-key", 'layer: "flat"', "warning"],
     ["invalid-value-type", "shadow:\n  sm: 1", "error"],
     ["invalid-value-type", 'zIndex:\n  modal: "top"', "error"],
@@ -137,7 +151,7 @@ test("schema validation covers elevation fields", () => {
 });
 
 test("schema validation covers shapes fields", () => {
-  const cases = [
+  const cases: SeverityCase[] = [
     ["required-token", 'borderWidth:\n  thin: "1px"', "error"],
     ["invalid-value-type", 'radius: "0.25rem"', "error"],
     ["token-minimum", "radius:", "error"],
@@ -161,7 +175,7 @@ test("schema validation covers shapes fields", () => {
 });
 
 test("schema validation covers component shape and properties", () => {
-  const cases = [
+  const cases: PathCase[] = [
     ["invalid-value-type", 'button: "primary"', "Components.button"],
     ["component-shape", 'button:\n  style:\n    color: "#ffffff"', "Components.button"],
     ["unknown-key", 'button:\n  style:\n    color: "#ffffff"', "Components.button.style"],
@@ -197,7 +211,7 @@ test("schema validation covers component shape and properties", () => {
 });
 
 test("schema validation covers iconography fields", () => {
-  const cases = [
+  const cases: SeverityCase[] = [
     ["required-token", 'style: "outlined"', "error"],
     ["invalid-value-type", "library: 1", "error"],
     ["invalid-value-type", 'library:\n  name: "Lucide"', "error"],
@@ -214,7 +228,7 @@ test("schema validation covers iconography fields", () => {
 });
 
 test("schema validation covers motion fields", () => {
-  const cases = [
+  const cases: SeverityCase[] = [
     ["invalid-value-type", 'duration: "fast"', "error"],
     ["invalid-time", 'duration:\n  fast: "fast"', "error"],
     ["invalid-easing", 'easing:\n  standard: "spring"', "error"],
@@ -228,7 +242,7 @@ test("schema validation covers motion fields", () => {
 });
 
 test("schema validation covers theme declarations and themed values", () => {
-  const cases = [
+  const cases: SourceCase[] = [
     ["invalid-theme-declaration", withMetadata(`themes: "light"`)],
     ["invalid-theme-name", withMetadata(`themes:\n  - 1`)],
     ["invalid-theme-name", withMetadata(`themes:\n  - "Light"`)],
