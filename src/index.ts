@@ -1,11 +1,15 @@
 export type {
+  DesignMdExportOptions,
+  DesignMdExportResult,
   DesignMdLintOptions,
   DesignMdLintResult,
   DesignMdLintSummary,
   DesignMdOptions,
   DesignMdParseResult,
 } from "./core/pipeline.js";
-export { lintDesignMd, parseDesignMd } from "./core/pipeline.js";
+export { exportDesignMd, lintDesignMd, parseDesignMd } from "./core/pipeline.js";
+
+export type { DesignMdExportFormat } from "./core/export/css.js";
 
 export type {
   Diagnostic,

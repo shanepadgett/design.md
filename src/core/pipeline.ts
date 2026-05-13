@@ -2,6 +2,10 @@ import type { Diagnostic } from "./diagnostics/types.js";
 import { summarizeDiagnostics } from "./diagnostics/types.js";
 import { parseDocument } from "./document/parse-document.js";
 import type { DesignDocument } from "./document/types.js";
+import {
+  serializeDesignSystemCss,
+  type DesignMdExportFormat,
+} from "./export/css.js";
 import type { DesignSystem } from "./resolve/types.js";
 import { resolveDesignSystem } from "./resolve/resolve-design-system.js";
 import type { TokenGroupName } from "./sections/registry.js";
@@ -33,6 +37,16 @@ export interface DesignMdLintSummary {
 export interface DesignMdLintResult extends DesignMdParseResult {
   valid: boolean;
   summary: DesignMdLintSummary;
+}
+
+export interface DesignMdExportOptions extends DesignMdOptions {
+  format: DesignMdExportFormat;
+}
+
+export interface DesignMdExportResult extends DesignMdParseResult {
+  valid: boolean;
+  summary: DesignMdLintSummary;
+  output?: string;
 }
 
 export function parseDesignMd(
@@ -82,4 +96,53 @@ export function lintDesignMd(
     valid,
     summary,
   };
+}
+
+export function exportDesignMd(
+  source: string,
+  options: DesignMdExportOptions,
+): DesignMdExportResult {
+  const linted = lintDesignMd(source, options);
+  const diagnostics: Diagnostic[] = [...linted.diagnostics];
+
+  if (linted.summary.errors > 0) {
+    return {
+      document: linted.document,
+      designSystem: linted.designSystem,
+      diagnostics,
+      valid: false,
+      summary: linted.summary,
+    };
+  }
+
+  const exportOptions: Parameters<typeof serializeDesignSystemCss>[1] = {
+    format: options.format,
+  };
+
+  if (options.filePath !== undefined) {
+    exportOptions.sourcePath = options.filePath;
+  }
+
+  const exported = serializeDesignSystemCss(linted.designSystem, exportOptions);
+  diagnostics.push(...exported.diagnostics);
+
+  const summaryCounts = summarizeDiagnostics(diagnostics);
+  const summary: DesignMdLintSummary = {
+    ...summaryCounts,
+    tokens: linted.designSystem.tokenCountByGroup,
+  };
+  const valid = summary.errors === 0;
+  const result: DesignMdExportResult = {
+    document: linted.document,
+    designSystem: linted.designSystem,
+    diagnostics,
+    valid,
+    summary,
+  };
+
+  if (valid && exported.output !== undefined) {
+    result.output = exported.output;
+  }
+
+  return result;
 }
