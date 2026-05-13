@@ -1,17 +1,70 @@
-# design.md
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/design-md-logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/design-md-logo-light.png">
+    <img alt="design.md" src="assets/design-md-logo-light.png" style="max-width: 520px; width: 80%;">
+  </picture>
+</p>
 
-## Development
+<p align="center">
+Write design system notes and tokens in one Markdown file. Use <code>designmd</code> to lint
+that file and export tokens to CSS.
+</p>
 
-This repo uses [mise](https://mise.jdx.dev/) to pin Node.js and run project
-tasks.
+## Run with npx
 
 ```bash
-mise install
-npm install
-mise run check
+npx --yes @shanepadgett/design.md --help
 ```
 
-`mise run check` runs formatting, linting, and TypeScript checks in sequence.
-Formatting and lint tasks apply safe fixes first, then report remaining issues.
+## Validate a design file
 
-Build CLI output with `mise run build`. Run tests with `mise run test`.
+```bash
+npx --yes @shanepadgett/design.md lint DESIGN.md
+```
+
+Treat warnings as failures:
+
+```bash
+npx --yes @shanepadgett/design.md lint --strict DESIGN.md
+```
+
+## Export tokens
+
+Export CSS custom properties:
+
+```bash
+npx --yes @shanepadgett/design.md export --format css --out design-tokens.css DESIGN.md
+```
+
+Export Tailwind-friendly CSS:
+
+```bash
+npx --yes @shanepadgett/design.md export --format css-tailwind --out theme.css DESIGN.md
+```
+
+Use `--force` to overwrite an existing output file.
+
+## Migrate legacy files
+
+Preview migration output:
+
+```bash
+npx --yes @shanepadgett/design.md migrate DESIGN.md
+```
+
+Update the file in place:
+
+```bash
+npx --yes @shanepadgett/design.md migrate --write DESIGN.md
+```
+
+## Library API
+
+```ts
+import { exportDesignMd, lintDesignMd, parseDesignMd } from "@shanepadgett/design.md";
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
