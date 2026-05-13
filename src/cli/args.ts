@@ -5,6 +5,7 @@ export type CliCommand =
   | HelpCommand
   | LintCommand
   | MigrateCommand
+  | SpecCommand
   | UsageErrorCommand
   | VersionCommand;
 
@@ -41,6 +42,11 @@ export interface MigrateCommand {
   write: boolean;
 }
 
+export interface SpecCommand {
+  kind: "spec";
+  agent: boolean;
+}
+
 export function parseCliArgs(args: readonly string[]): CliCommand {
   const [command, ...rest] = args;
 
@@ -64,10 +70,43 @@ export function parseCliArgs(args: readonly string[]): CliCommand {
     return parseMigrateArgs(rest);
   }
 
+  if (command === "spec") {
+    return parseSpecArgs(rest);
+  }
+
   return {
     kind: "usage-error",
     message: `Unknown command '${command}'.`,
   };
+}
+
+function parseSpecArgs(args: readonly string[]): CliCommand {
+  let agent = false;
+
+  for (const arg of args) {
+    if (arg === "--agent") {
+      agent = true;
+      continue;
+    }
+
+    if (arg === "--help" || arg === "-h") {
+      return { kind: "help" };
+    }
+
+    if (arg.startsWith("-")) {
+      return {
+        kind: "usage-error",
+        message: `Unknown spec option '${arg}'.`,
+      };
+    }
+
+    return {
+      kind: "usage-error",
+      message: "spec does not accept file paths.",
+    };
+  }
+
+  return { kind: "spec", agent };
 }
 
 function parseMigrateArgs(args: readonly string[]): CliCommand {
@@ -244,6 +283,7 @@ Usage:
   designmd lint [--strict] <file>
   designmd export --format css|css-tailwind [--out <file>] [--force] <file>
   designmd migrate [--write] <file>
+  designmd spec [--agent]
   designmd --help
   designmd --version
 
@@ -251,6 +291,7 @@ Commands:
   lint      Validate a DESIGN.md file
   export    Export DESIGN.md tokens to CSS files
   migrate   Convert legacy frontmatter DESIGN.md files
+  spec      Print the DESIGN.md specification
 
 Options:
   --strict        Treat warnings as lint failures
@@ -258,5 +299,6 @@ Options:
   --out <file>    Override export output path
   --force         Overwrite existing export output
   --write         Update the migrated input file in place
+  --agent         Print compact agent-oriented spec
 `;
 }

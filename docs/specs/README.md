@@ -11,6 +11,7 @@ The recommended filename is `DESIGN.md`, but tools may lint any Markdown file pa
 - [Token sections](./token-sections.md)
 - [Linting](./linting.md)
 - [Exporting and tooling](./exporting.md)
+- [Agent-oriented compact spec](./agent.md)
 
 Future work lives in [Future enhancements](../future.md).
 

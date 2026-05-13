@@ -59,6 +59,20 @@ Update the file in place:
 npx --yes @shanepadgett/design.md migrate --write DESIGN.md
 ```
 
+## Print the spec
+
+Print the full human-readable spec:
+
+```bash
+npx --yes @shanepadgett/design.md spec
+```
+
+Print the compact agent-oriented spec:
+
+```bash
+npx --yes @shanepadgett/design.md spec --agent
+```
+
 ## Library API
 
 ```ts

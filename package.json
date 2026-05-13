@@ -38,6 +38,7 @@
     "build": "node ./node_modules/typescript/bin/tsc -p tsconfig.build.json",
     "coverage": "npm --silent run build && node --test --experimental-test-coverage --test-coverage-include=\"dist/**/*.js\" --test-coverage-branches=90 test/*.test.ts",
     "coverage:lcov": "npm --silent run build && node --test --experimental-test-coverage --test-coverage-include=\"dist/**/*.js\" --test-coverage-branches=90 --test-reporter=lcov --test-reporter-destination=lcov.info test/*.test.ts",
+    "spec:update": "node scripts/update-spec-content.mjs",
     "format:fix": "node ./node_modules/oxfmt/bin/oxfmt --write . \"!node_modules/**\" \"!dist/**\" \"!external/**\" \"!coverage/**\" \"!.pi/**\" > /dev/null",
     "format:check": "node ./node_modules/oxfmt/bin/oxfmt --list-different . \"!node_modules/**\" \"!dist/**\" \"!external/**\" \"!coverage/**\" \"!.pi/**\"",
     "lint:fix": "node ./node_modules/oxlint/bin/oxlint . --fix --format unix --ignore-pattern \"node_modules/**\" --ignore-pattern \"dist/**\" --ignore-pattern \"external/**\" --ignore-pattern \"coverage/**\" --ignore-pattern \".pi/**\" --no-error-on-unmatched-pattern",

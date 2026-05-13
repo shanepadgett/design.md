@@ -138,6 +138,10 @@ test("CLI help and usage errors cover command option parsing", async () => {
   assert.equal(await runCli(["migrate", "-h"], migrateHelp.io), 0);
   assert.match(migrateHelp.output().stdout, /designmd migrate/);
 
+  const specHelp = createIo({});
+  assert.equal(await runCli(["spec", "-h"], specHelp.io), 0);
+  assert.match(specHelp.output().stdout, /designmd spec/);
+
   const unknownCommand = createIo({});
   assert.equal(await runCli(["unknown"], unknownCommand.io), 2);
   assert.match(unknownCommand.output().stderr, /Unknown command 'unknown'/);
@@ -153,6 +157,14 @@ test("CLI help and usage errors cover command option parsing", async () => {
   );
   assert.match(unknownMigrateOption.output().stderr, /Unknown migrate option '--out'/);
 
+  const unknownSpecOption = createIo({});
+  assert.equal(await runCli(["spec", "--json"], unknownSpecOption.io), 2);
+  assert.match(unknownSpecOption.output().stderr, /Unknown spec option '--json'/);
+
+  const specFile = createIo({});
+  assert.equal(await runCli(["spec", "DESIGN.md"], specFile.io), 2);
+  assert.match(specFile.output().stderr, /spec does not accept file paths/);
+
   const missingMigrateFile = createIo({});
   assert.equal(await runCli(["migrate"], missingMigrateFile.io), 2);
   assert.match(
@@ -166,6 +178,21 @@ test("CLI help and usage errors cover command option parsing", async () => {
     tooManyMigrateFiles.output().stderr,
     /migrate requires exactly one legacy DESIGN\.md file path/,
   );
+});
+
+test("CLI spec prints human and agent specs", async () => {
+  const human = createIo({});
+  assert.equal(await runCli(["spec"], human.io), 0);
+  assert.match(human.output().stdout, /# DESIGN\.md Specification/);
+  assert.match(human.output().stdout, /# Token Sections/);
+  assert.equal(human.output().stderr, "");
+
+  const agent = createIo({});
+  assert.equal(await runCli(["spec", "--agent"], agent.io), 0);
+  assert.match(agent.output().stdout, /# DESIGN\.md agent spec/);
+  assert.match(agent.output().stdout, /Start minimal/);
+  assert.match(agent.output().stdout, /Themes are optional/);
+  assert.equal(agent.output().stderr, "");
 });
 
 test("CLI export usage errors cover required option values and file count", async () => {
