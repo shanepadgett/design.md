@@ -1,0 +1,64 @@
+min_version = { soft = "2026.5.6" }
+
+[tools]
+node = "24.15.0"
+
+[tasks."format:fix"]
+description = "Format supported files in place"
+run = "npm run format:fix"
+
+[tasks."format:check"]
+description = "Report remaining formatting differences"
+run = "npm run format:check"
+
+[tasks.format]
+description = "Fix formatting first, then report remaining formatting issues"
+run = [
+  { task = "format:fix" },
+  { task = "format:check" },
+]
+
+[tasks."lint:fix"]
+description = "Apply safe code lint fixes"
+run = "npm run lint:fix"
+
+[tasks."lint:check"]
+description = "Report remaining code lint issues"
+run = "npm run lint:check"
+
+[tasks."markdownlint:fix"]
+description = "Apply safe Markdown lint fixes"
+run = "npm run markdownlint:fix"
+
+[tasks."markdownlint:check"]
+description = "Report remaining Markdown lint issues"
+run = "npm run markdownlint:check"
+
+[tasks.lint]
+description = "Fix lint issues first, then report remaining lint issues"
+run = [
+  { task = "lint:fix" },
+  { task = "lint:check" },
+  { task = "markdownlint:fix" },
+  { task = "markdownlint:check" },
+]
+
+[tasks.typecheck]
+description = "Run TypeScript without emitting files"
+run = "npm run typecheck"
+
+[tasks.build]
+description = "Build the CLI and library"
+run = "npm run build"
+
+[tasks.test]
+description = "Run test suite"
+run = "npm run test"
+
+[tasks.check]
+description = "Sequentially format, lint, and typecheck"
+run = [
+  { task = "format" },
+  { task = "lint" },
+  { task = "typecheck" },
+]
