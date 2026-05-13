@@ -38,6 +38,17 @@ Likely path:
 
 Direct Figma plugin work is deferred.
 
+## Diff command
+
+Add `designmd diff` after linting and export are stable.
+
+Likely behavior:
+
+- compare two DESIGN.md files
+- report added, removed, and modified token paths
+- report added, removed, and modified prose sections by normalized text
+- fail only when the after file has more lint errors than the before file
+
 ## Identity-based examples
 
 Create an `examples/` folder with three realistic identity-based DESIGN.md files.

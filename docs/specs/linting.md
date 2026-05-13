@@ -4,17 +4,17 @@ The linter validates document structure, token syntax, section schemas, referenc
 
 ## Severity
 
-Findings use only two severities:
+Diagnostics use only two severities:
 
 - `error` fails default linting
 - `warning` passes default linting but fails `--strict`
 
-Summary data is separate from findings. There is no `info` severity.
+Summary data is separate from diagnostics. There is no `info` severity.
 
 ```json
 {
   "valid": false,
-  "findings": [
+  "diagnostics": [
     {
       "severity": "error",
       "rule": "missing-section",
@@ -104,7 +104,7 @@ Token references in prose are validated too.
 
 ## Prose hard-coded value rule
 
-Prose should not repeat exact token values. The linter warns when prose outside code fences contains hard-coded:
+Prose should not use hard-coded token-like values. The linter warns when prose outside code fences contains hard-coded:
 
 - colors
 - dimensions
@@ -146,17 +146,6 @@ Default linting exits with code `1` when errors exist and `0` otherwise.
 
 ## CLI and library output
 
-The CLI hides parsed design system output by default. It may expose it through `--include-design-system`.
+The CLI hides parsed design system output.
 
 The library API returns parsed design system data with lint results so generators and agents can reuse one parse pass.
-
-## Diff behavior
-
-`designmd diff` compares two DESIGN.md files.
-
-The diff reports:
-
-- added, removed, and modified token paths
-- added, removed, and modified prose sections by normalized text
-
-Diff does not attempt semantic prose regression scoring. It exits with failure only when the after file has more lint errors than the before file.
