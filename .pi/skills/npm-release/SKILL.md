@@ -17,6 +17,7 @@ Release `@shanepadgett/design.md` from this repo.
 - GitHub Release publish triggers `.github/workflows/npm-publish.yml`.
 - Target: npmjs.org, not GitHub Packages.
 - Auth: npm provenance + GitHub OIDC trusted publishing.
+- Release Please uses `secrets.RELEASE_PLEASE_TOKEN`, a fine-grained PAT with repository `Contents: Read and write` and `Pull requests: Read and write`, so releases it creates can trigger npm publish workflow.
 - Do not manually bump versions or create raw tags in normal flow.
 - Do not manually create GitHub Release unless repairing Release Please after user confirmation.
 - Normal release flow is: ask user -> trigger Release Please -> inspect release PR -> ask user -> merge release PR -> monitor npm publish.
@@ -63,6 +64,7 @@ Confirm:
 - commits since latest tag use conventional commits for desired bump
 - `.github/workflows/release-please.yml` exists
 - `.github/workflows/npm-publish.yml` exists
+- `RELEASE_PLEASE_TOKEN` repository secret exists for Release Please
 - npm trusted publishing is configured for repo/package/workflow
 
 Useful read-only checks:
