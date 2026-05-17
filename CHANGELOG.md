@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/shanepadgett/design.md/compare/v0.3.0...v0.3.1) (2026-05-17)
+
+
+### Bug Fixes
+
+* accept numeric spacing anchors ([d02bf3a](https://github.com/shanepadgett/design.md/commit/d02bf3addf671c8f64c7b3e1bc780da3cb5835c0))
+
 ## [0.3.0](https://github.com/shanepadgett/design.md/compare/v0.2.0...v0.3.0) (2026-05-17)
 
 
