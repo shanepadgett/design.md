@@ -13,14 +13,15 @@ Release `@shanepadgett/design.md` from this repo.
 - `.github/workflows/release-please.yml` runs only by manual `workflow_dispatch`.
 - Release Please reads conventional commits since last `v*` tag and opens/updates a release PR.
 - Release PR updates `package.json`, `package-lock.json`, `.release-please-manifest.json`, and `CHANGELOG.md`.
-- Merging release PR publishes a GitHub Release with tag `v<version>`.
+- Because Release Please workflow is manual-only, merging release PR updates `main` but does not automatically publish GitHub Release.
+- After release PR merge, run Release Please manually a second time on `main`; that publishes GitHub Release with tag `v<version>`.
 - GitHub Release publish triggers `.github/workflows/npm-publish.yml`.
 - Target: npmjs.org, not GitHub Packages.
 - Auth: npm provenance + GitHub OIDC trusted publishing.
 - Release Please uses `secrets.RELEASE_PLEASE_TOKEN`, a fine-grained PAT with repository `Contents: Read and write` and `Pull requests: Read and write`, so releases it creates can trigger npm publish workflow.
 - Do not manually bump versions or create raw tags in normal flow.
 - Do not manually create GitHub Release unless repairing Release Please after user confirmation.
-- Normal release flow is: ask user -> trigger Release Please -> inspect release PR -> ask user -> merge release PR -> monitor npm publish.
+- Normal release flow is: ask user -> trigger Release Please -> inspect release PR -> ask user -> merge release PR -> ask user -> trigger Release Please again -> confirm GitHub Release -> monitor npm publish.
 
 ## Versioning
 
@@ -132,7 +133,25 @@ Preferred:
 gh pr merge <number> --squash --delete-branch
 ```
 
-After merge, Release Please should publish GitHub Release as part of the release PR flow. Do not create duplicate release manually.
+After merge, Release Please does not publish GitHub Release automatically because workflow only runs by `workflow_dispatch`. Ask user before the second state-changing command:
+
+> Run Release Please again on `main` to publish GitHub Release `v<version>`?
+
+Then trigger Release Please again:
+
+```bash
+gh workflow run "Release Please" --ref main
+```
+
+Poll bounded with same Release Please polling loop from "Open or update release PR".
+
+Then confirm GitHub Release exists:
+
+```bash
+gh release view v<version> --json tagName,name,publishedAt,url
+```
+
+Do not create duplicate release manually.
 
 If `gh` unavailable, tell user to merge release PR in GitHub UI and wait for Release Please to publish release.
 
