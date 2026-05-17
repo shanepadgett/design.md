@@ -152,7 +152,7 @@ breakpoint:
   lg: "64rem"
 ```
 
-Recommended spacing anchors are `sm`, `md`, and `lg`.
+Recommended spacing anchors are `sm`, `md`, and `lg`. Quoted integer spacing scales such as `"0"`, `"1"`, and `"2"` are also valid anchors and do not produce missing-anchor warnings.
 
 ## Elevation
 

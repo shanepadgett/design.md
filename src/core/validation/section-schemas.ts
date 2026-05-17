@@ -310,7 +310,15 @@ function validateLayout(sectionToken: ParsedSectionToken, diagnostics: Diagnosti
   const spacingMap = validateMapEntry(sectionToken, diagnostics, spacing, "Layout.spacing");
   if (spacingMap !== undefined) {
     validateDimensionMap(sectionToken, diagnostics, spacingMap, ["spacing"], true);
-    warnMissingAnchors(sectionToken, diagnostics, spacingMap, ["sm", "md", "lg"], "Layout.spacing");
+    if (!hasQuotedIntegerKey(spacingMap)) {
+      warnMissingAnchors(
+        sectionToken,
+        diagnostics,
+        spacingMap,
+        ["sm", "md", "lg"],
+        "Layout.spacing",
+      );
+    }
   }
 
   for (const key of ["container", "breakpoint"]) {
@@ -1115,6 +1123,10 @@ function findEntry(map: TokenMap, key: string): TokenMapEntry | undefined {
 
 function hasAnyEntry(map: TokenMap, keys: readonly string[]): boolean {
   return keys.some((key) => findEntry(map, key) !== undefined);
+}
+
+function hasQuotedIntegerKey(map: TokenMap): boolean {
+  return map.entries.some((entry) => entry.quotedKey && /^\d+$/.test(entry.key));
 }
 
 function addError(

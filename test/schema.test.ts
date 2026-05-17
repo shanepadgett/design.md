@@ -199,6 +199,25 @@ test("schema validation covers layout fields", () => {
   }
 });
 
+test("schema validation accepts numeric spacing scales without anchor warnings", () => {
+  const result = lint(
+    replaceLayoutYaml(`spacing:
+  "0": "0px"
+  "1": "4px"
+  "2": "8px"
+  "3": "12px"`),
+  );
+
+  assert.equal(result.valid, true);
+  assert.equal(
+    result.diagnostics.some(
+      (diagnostic) => diagnostic.rule === "missing-anchor" && diagnostic.path === "Layout.spacing",
+    ),
+    false,
+  );
+  assert.equal(result.designSystem.tokens.has("layout.spacing.1"), true);
+});
+
 test("schema validation covers elevation fields", () => {
   const cases: SeverityCase[] = [
     ["unknown-key", 'layer: "flat"', "warning"],
