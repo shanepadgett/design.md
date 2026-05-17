@@ -203,7 +203,7 @@ borderStyle:
   default: "solid"
 ```
 
-Recommended radius anchors are `none`, `sm`, `md`, and `full`.
+Recommended radius anchors are `none`, `sm`, `md`, and `full`. Quoted integer radius scales such as `"0"`, `"1"`, and `"2"` are also valid anchors and do not produce missing-anchor warnings.
 
 ## Components
 

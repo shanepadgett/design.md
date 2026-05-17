@@ -121,7 +121,7 @@ Warnings are produced when common anchors are missing:
 - Colors: `primary`, `surface`, `on-surface`
 - Typography: `body` or `body-md`
 - Layout spacing: `sm`, `md`, `lg`, unless `spacing` uses quoted integer scale keys such as `"0"`, `"1"`, and `"2"`
-- Shapes radius: `none`, `sm`, `md`, `full`
+- Shapes radius: `none`, `sm`, `md`, `full`, unless `radius` uses quoted integer scale keys such as `"0"`, `"1"`, and `"2"`
 
 These anchors are recommendations, not requirements.
 

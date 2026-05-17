@@ -395,13 +395,15 @@ function validateShapes(sectionToken: ParsedSectionToken, diagnostics: Diagnosti
   const radiusMap = validateMapEntry(sectionToken, diagnostics, radius, "Shapes.radius");
   if (radiusMap !== undefined) {
     validateDimensionMap(sectionToken, diagnostics, radiusMap, ["radius"], true);
-    warnMissingAnchors(
-      sectionToken,
-      diagnostics,
-      radiusMap,
-      ["none", "sm", "md", "full"],
-      "Shapes.radius",
-    );
+    if (!hasQuotedIntegerKey(radiusMap)) {
+      warnMissingAnchors(
+        sectionToken,
+        diagnostics,
+        radiusMap,
+        ["none", "sm", "md", "full"],
+        "Shapes.radius",
+      );
+    }
   }
 
   const borderWidth = findEntry(root, "borderWidth");

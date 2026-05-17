@@ -255,6 +255,26 @@ test("schema validation covers shapes fields", () => {
   }
 });
 
+test("schema validation accepts numeric radius scales without anchor warnings", () => {
+  const result = lint(
+    replaceShapesYaml(`radius:
+  "0": 0
+  "1": "4px"
+  "2": "8px"
+  "3": "12px"
+  full: "9999px"`),
+  );
+
+  assert.equal(result.valid, true);
+  assert.equal(
+    result.diagnostics.some(
+      (diagnostic) => diagnostic.rule === "missing-anchor" && diagnostic.path === "Shapes.radius",
+    ),
+    false,
+  );
+  assert.equal(result.designSystem.tokens.has("shapes.radius.1"), true);
+});
+
 test("schema validation covers component shape and properties", () => {
   const cases: PathCase[] = [
     ["invalid-value-type", 'button: "primary"', "Components.button"],
