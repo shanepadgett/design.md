@@ -94,6 +94,10 @@ Exporters use mapped names, not exact internal paths.
 | --------------------------------- | --------------------- |
 | `colors.*`                        | `--color-*`           |
 | `typography.fontFamily.*`         | `--font-*`            |
+| `typography.fontSize.*`           | `--text-*`            |
+| `typography.lineHeight.*`         | `--leading-*`         |
+| `typography.letterSpacing.*`      | `--tracking-*`        |
+| `typography.fontWeight.*`         | `--font-weight-*`     |
 | `typography.text.*.fontSize`      | `--text-*`            |
 | `typography.text.*.lineHeight`    | `--leading-*`         |
 | `typography.text.*.letterSpacing` | `--tracking-*`        |

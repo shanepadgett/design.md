@@ -262,6 +262,22 @@ function mapTokenPathForCss(path: string): VariableMapping | undefined {
       return prefixed("--font-", segments.slice(2), 1, true);
     }
 
+    if (second === "fontSize" && segments.length > 2) {
+      return prefixed("--text-", segments.slice(2), 2, true);
+    }
+
+    if (second === "lineHeight" && segments.length > 2) {
+      return prefixed("--leading-", segments.slice(2), 3, true);
+    }
+
+    if (second === "letterSpacing" && segments.length > 2) {
+      return prefixed("--tracking-", segments.slice(2), 4, true);
+    }
+
+    if (second === "fontWeight" && segments.length > 2) {
+      return prefixed("--font-weight-", segments.slice(2), 5, true);
+    }
+
     if (second === "text" && segments.length > 3) {
       const field = segments.at(-1);
       const name = segments.slice(2, -1);

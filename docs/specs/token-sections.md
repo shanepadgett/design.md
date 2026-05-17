@@ -63,6 +63,10 @@ Required keys:
 Optional keys:
 
 - `fontFamily`
+- `fontSize`
+- `fontWeight`
+- `lineHeight`
+- `letterSpacing`
 - `measure`
 
 `text` must contain at least one text style. Each text style requires `fontFamily`, `fontSize`, and `lineHeight`.
@@ -72,22 +76,37 @@ fontFamily:
   sans: "Inter, system-ui, sans-serif"
   mono: "SFMono-Regular, ui-monospace, monospace"
 baseFontSize: "16px"
+fontSize:
+  "1": "0.875rem"
+  "2": "1rem"
+  "3": "1.5rem"
+fontWeight:
+  "1": 400
+  "2": 700
+lineHeight:
+  "1": 1.15
+  "2": 1.5
+letterSpacing:
+  "1": "-0.02em"
+  "2": "0em"
 measure:
   body: "38rem"
   heading: "28rem"
 text:
   body:
     fontFamily: "{typography.fontFamily.sans}"
-    fontSize: "1rem"
-    lineHeight: 1.5
-    fontWeight: 400
+    fontSize: "{typography.fontSize.2}"
+    lineHeight: "{typography.lineHeight.2}"
+    fontWeight: "{typography.fontWeight.1}"
   heading:
     fontFamily: "{typography.fontFamily.sans}"
-    fontSize: "2rem"
-    lineHeight: 1.15
-    fontWeight: 700
-    letterSpacing: "-0.02em"
+    fontSize: "{typography.fontSize.3}"
+    lineHeight: "{typography.lineHeight.1}"
+    fontWeight: "{typography.fontWeight.2}"
+    letterSpacing: "{typography.letterSpacing.1}"
 ```
+
+Primitive typography ramps are optional. Use them when several text styles share sizes, weights, line heights, or letter spacing values.
 
 Text style fields:
 

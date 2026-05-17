@@ -174,7 +174,7 @@ References use quoted `{path.to.token}` strings. Section roots are `colors`, `ty
 ## Section key cheat sheet
 
 - `Colors`: semantic color tokens like `primary`, `on-primary`, `surface`, `on-surface`, `secondary`, `error`.
-- `Typography`: `baseFontSize`, `fontFamily`, `text`, `measure`; text style keys include `fontFamily`, `fontSize`, `fontWeight`, `lineHeight`, `letterSpacing`, `fontFeature`, `fontVariation`.
+- `Typography`: `baseFontSize`, `fontFamily`, optional primitive ramps `fontSize`, `fontWeight`, `lineHeight`, `letterSpacing`, `text`, `measure`; text style keys include `fontFamily`, `fontSize`, `fontWeight`, `lineHeight`, `letterSpacing`, `fontFeature`, `fontVariation`.
 - `Layout`: `spacing`, `container`, `grid`, `breakpoint`.
 - `Elevation`: `shadow`, `zIndex`.
 - `Shapes`: `radius`, `borderWidth`, `borderStyle`.

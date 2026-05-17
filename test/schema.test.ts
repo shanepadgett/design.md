@@ -117,6 +117,68 @@ text:
   }
 });
 
+test("schema validation supports primitive typography ramps", () => {
+  const result = lint(
+    replaceTypographyYaml(`fontFamily:
+  sans: "Inter"
+baseFontSize: "16px"
+fontSize:
+  "1": "0.875rem"
+fontWeight:
+  "1": 400
+lineHeight:
+  "1": 1.5
+letterSpacing:
+  "1": "0em"
+text:
+  body:
+    fontFamily: "{typography.fontFamily.sans}"
+    fontSize: "{typography.fontSize.1}"
+    fontWeight: "{typography.fontWeight.1}"
+    lineHeight: "{typography.lineHeight.1}"
+    letterSpacing: "{typography.letterSpacing.1}"`),
+  );
+
+  assert.equal(result.valid, true);
+  assert.equal(result.designSystem.tokens.has("typography.fontSize.1"), true);
+  assert.equal(result.designSystem.tokens.has("typography.fontWeight.1"), true);
+  assert.equal(result.designSystem.tokens.has("typography.lineHeight.1"), true);
+  assert.equal(result.designSystem.tokens.has("typography.letterSpacing.1"), true);
+  assert.equal(
+    result.diagnostics.some(
+      (diagnostic) => diagnostic.rule === "unknown-key" || diagnostic.rule === "key-style",
+    ),
+    false,
+  );
+});
+
+test("schema validation rejects invalid primitive typography ramps", () => {
+  const cases: RuleCase[] = [
+    ["invalid-dimension", 'fontSize:\n  "1": 1'],
+    ["invalid-value-type", 'fontWeight:\n  "1": "bold"'],
+    ["invalid-value-type", 'lineHeight:\n  "1": "tight"'],
+    ["invalid-dimension", 'letterSpacing:\n  "1": 1'],
+  ];
+
+  for (const [rule, yaml] of cases) {
+    assertDiagnostic(
+      lint(
+        replaceTypographyYaml(`fontFamily:
+  sans: "Inter"
+baseFontSize: "16px"
+${yaml}
+text:
+  body:
+    fontFamily: "{typography.fontFamily.sans}"
+    fontSize: "1rem"
+    lineHeight: 1.5`),
+      ),
+      rule,
+      "error",
+    );
+  }
+});
+
 test("schema validation covers layout fields", () => {
   const cases: RuleCase[] = [
     ["required-token", 'container:\n  md: "64rem"'],

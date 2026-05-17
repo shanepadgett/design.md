@@ -5,6 +5,7 @@ import { serializeDesignSystemCss } from "../dist/core/export/css.js";
 import type { DesignSystem, ResolvedToken, SourceSpan } from "../dist/index.js";
 import {
   replaceColorsYaml,
+  replaceTypographyYaml,
   replaceShapesYaml,
   validDesignMd,
   withElevationYaml,
@@ -116,6 +117,44 @@ test("css-tailwind export emits static theme variables and skips non-tailwind na
   assert.doesNotMatch(output, /--z-index-modal/);
   assert.doesNotMatch(output, /--duration-slow/);
   assert.doesNotMatch(output, /--border-width-thin/);
+});
+
+test("css export emits primitive typography ramps and text references", () => {
+  const result = exportCss(
+    replaceTypographyYaml(
+      yaml(
+        "fontFamily:",
+        '  sans: "Inter"',
+        'baseFontSize: "16px"',
+        "fontSize:",
+        '  "1": "0.875rem"',
+        "fontWeight:",
+        '  "1": 400',
+        "lineHeight:",
+        '  "1": 1.5',
+        "letterSpacing:",
+        '  "1": "0em"',
+        "text:",
+        "  body:",
+        '    fontFamily: "{typography.fontFamily.sans}"',
+        '    fontSize: "{typography.fontSize.1}"',
+        '    fontWeight: "{typography.fontWeight.1}"',
+        '    lineHeight: "{typography.lineHeight.1}"',
+        '    letterSpacing: "{typography.letterSpacing.1}"',
+      ),
+    ),
+  );
+
+  assert.equal(result.valid, true);
+  const output = result.output ?? "";
+  assert.match(output, /--text-1: 0\.875rem;/);
+  assert.match(output, /--font-weight-1: 400;/);
+  assert.match(output, /--leading-1: 1\.5;/);
+  assert.match(output, /--tracking-1: 0em;/);
+  assert.match(output, /--text-body: var\(--text-1\);/);
+  assert.match(output, /--font-weight-body: var\(--font-weight-1\);/);
+  assert.match(output, /--leading-body: var\(--leading-1\);/);
+  assert.match(output, /--tracking-body: var\(--tracking-1\);/);
 });
 
 test("css export emits default theme values at root and other themes under data-theme selectors", () => {

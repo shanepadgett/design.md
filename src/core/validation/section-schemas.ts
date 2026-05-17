@@ -32,6 +32,17 @@ const textStyleFields = [
   "fontVariation",
 ] as const;
 
+const typographyRootFields = [
+  "fontFamily",
+  "baseFontSize",
+  "fontSize",
+  "fontWeight",
+  "lineHeight",
+  "letterSpacing",
+  "measure",
+  "text",
+] as const;
+
 export function validateSectionSchemas(sectionTokens: readonly ParsedSectionToken[]): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
 
@@ -108,7 +119,7 @@ function validateColors(sectionToken: ParsedSectionToken, diagnostics: Diagnosti
 
 function validateTypography(sectionToken: ParsedSectionToken, diagnostics: Diagnostic[]): void {
   const root = sectionToken.parsed.root;
-  warnUnknownKeys(sectionToken, diagnostics, ["fontFamily", "baseFontSize", "measure", "text"]);
+  warnUnknownKeys(sectionToken, diagnostics, typographyRootFields);
 
   const baseFontSize = requireEntry(sectionToken, diagnostics, root, "baseFontSize");
   if (baseFontSize !== undefined) {
@@ -162,6 +173,28 @@ function validateTypography(sectionToken: ParsedSectionToken, diagnostics: Diagn
     });
   }
 
+  validateTypographyPrimitiveMap(sectionToken, diagnostics, root, "fontSize", (scalar, path) => {
+    validateDimensionScalar(sectionToken, diagnostics, scalar, path.split(".").slice(1));
+  });
+
+  validateTypographyPrimitiveMap(sectionToken, diagnostics, root, "fontWeight", (scalar, path) => {
+    validateNumberOrReference(sectionToken, diagnostics, scalar, path);
+  });
+
+  validateTypographyPrimitiveMap(sectionToken, diagnostics, root, "lineHeight", (scalar, path) => {
+    validateNumberDimensionOrReference(sectionToken, diagnostics, scalar, path);
+  });
+
+  validateTypographyPrimitiveMap(
+    sectionToken,
+    diagnostics,
+    root,
+    "letterSpacing",
+    (scalar, path) => {
+      validateDimensionScalar(sectionToken, diagnostics, scalar, path.split(".").slice(1));
+    },
+  );
+
   const measure = findEntry(root, "measure");
   const measureMap = validateMapEntry(sectionToken, diagnostics, measure, "Typography.measure");
   if (measureMap !== undefined) {
@@ -180,6 +213,20 @@ function validateTypography(sectionToken: ParsedSectionToken, diagnostics: Diagn
       textMap,
       "Typography.text",
     );
+  }
+}
+
+function validateTypographyPrimitiveMap(
+  sectionToken: ParsedSectionToken,
+  diagnostics: Diagnostic[],
+  root: TokenMap,
+  key: "fontSize" | "fontWeight" | "lineHeight" | "letterSpacing",
+  validate: (scalar: TokenScalar, path: string) => void,
+): void {
+  const entry = findEntry(root, key);
+  const map = validateMapEntry(sectionToken, diagnostics, entry, `Typography.${key}`);
+  if (map !== undefined) {
+    validateLeaves(sectionToken, diagnostics, map, [key], validate);
   }
 }
 
@@ -744,7 +791,7 @@ function isStructuralKey(
 
 function isTypographyStructuralKey(parentSegments: readonly string[], key: string): boolean {
   if (parentSegments.length === 0) {
-    return ["fontFamily", "baseFontSize", "measure", "text"].includes(key);
+    return typographyRootFields.includes(key as (typeof typographyRootFields)[number]);
   }
 
   return (
