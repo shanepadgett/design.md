@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/shanepadgett/design.md/compare/v0.2.0...v0.3.0) (2026-05-17)
+
+
+### Features
+
+* add primitive typography ramps ([2482860](https://github.com/shanepadgett/design.md/commit/2482860abc92c4eb01e3090d9ef9e1615380ab00))
+
 ## [0.2.0](https://github.com/shanepadgett/design.md/compare/v0.1.0...v0.2.0) (2026-05-13)
 
 
