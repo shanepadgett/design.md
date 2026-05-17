@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/shanepadgett/design.md/compare/v0.3.1...v0.3.2) (2026-05-17)
+
+
+### Bug Fixes
+
+* accept numeric radius anchors ([e21c810](https://github.com/shanepadgett/design.md/commit/e21c81022e006226261e331d6d150b2a8ac5274f))
+
 ## [0.3.1](https://github.com/shanepadgett/design.md/compare/v0.3.0...v0.3.1) (2026-05-17)
 
 
