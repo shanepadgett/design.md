@@ -167,8 +167,10 @@ After GitHub Release publish:
 
 ```bash
 npm view @shanepadgett/design.md version
-npx --yes @shanepadgett/design.md --help
+npx --yes @shanepadgett/design.md@<version> --help
 ```
+
+Use version-pinned `npx` for the CLI smoke test. Unversioned `npx --yes @shanepadgett/design.md --help` can fail to expose the `designmd` bin from npm/npx cache even when the published package is valid.
 
 No background-watch. Use bounded polling, short sleeps, clear status.
 
