@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/shanepadgett/design.md/compare/v0.3.2...v0.4.0) (2026-05-18)
+
+
+### Features
+
+* add prose extraction command ([285ad52](https://github.com/shanepadgett/design.md/commit/285ad52e5c772397c69edfda91baf18325dead2e))
+
 ## [0.3.2](https://github.com/shanepadgett/design.md/compare/v0.3.1...v0.3.2) (2026-05-17)
 
 
