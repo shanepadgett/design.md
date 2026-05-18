@@ -13,6 +13,9 @@ designmd export --format css DESIGN.md
 designmd export --format css-tailwind DESIGN.md
 designmd export --format css --out custom-tokens.css DESIGN.md
 designmd export --format css-tailwind --force DESIGN.md
+designmd prose DESIGN.md
+designmd prose --list DESIGN.md
+designmd prose --section Colors DESIGN.md
 designmd migrate old-DESIGN.md > DESIGN.md
 designmd migrate --write old-DESIGN.md
 ```
@@ -48,6 +51,21 @@ Successful export prints the path that was written:
 
 ```txt
 wrote design-tokens.css
+```
+
+## Prose extraction
+
+`designmd prose` prints Markdown prose with `yaml` token fences removed. It preserves the H1 title, H2 section headings, unknown/custom H2 sections, lists, paragraphs, and non-YAML code fences.
+
+```bash
+designmd prose DESIGN.md
+```
+
+Use `--section <name>` to print one exact H2 section and `--list` to list available H2 section names for browsing.
+
+```bash
+designmd prose --section Typography DESIGN.md
+designmd prose --list DESIGN.md
 ```
 
 ## CSS custom properties

@@ -5,6 +5,7 @@ export type CliCommand =
   | HelpCommand
   | LintCommand
   | MigrateCommand
+  | ProseCommand
   | SpecCommand
   | UsageErrorCommand
   | VersionCommand;
@@ -42,6 +43,13 @@ export interface MigrateCommand {
   write: boolean;
 }
 
+export interface ProseCommand {
+  kind: "prose";
+  filePath: string;
+  list: boolean;
+  section?: string;
+}
+
 export interface SpecCommand {
   kind: "spec";
   agent: boolean;
@@ -70,6 +78,10 @@ export function parseCliArgs(args: readonly string[]): CliCommand {
     return parseMigrateArgs(rest);
   }
 
+  if (command === "prose") {
+    return parseProseArgs(rest);
+  }
+
   if (command === "spec") {
     return parseSpecArgs(rest);
   }
@@ -78,6 +90,78 @@ export function parseCliArgs(args: readonly string[]): CliCommand {
     kind: "usage-error",
     message: `Unknown command '${command}'.`,
   };
+}
+
+function parseProseArgs(args: readonly string[]): CliCommand {
+  let list = false;
+  let section: string | undefined;
+  const filePaths: string[] = [];
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (arg === undefined) {
+      continue;
+    }
+
+    if (arg === "--list") {
+      list = true;
+      continue;
+    }
+
+    if (arg === "--help" || arg === "-h") {
+      return { kind: "help" };
+    }
+
+    if (arg === "--section") {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith("-")) {
+        return {
+          kind: "usage-error",
+          message: "prose --section requires a section name.",
+        };
+      }
+
+      section = value;
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith("-")) {
+      return {
+        kind: "usage-error",
+        message: `Unknown prose option '${arg}'.`,
+      };
+    }
+
+    filePaths.push(arg);
+  }
+
+  if (list && section !== undefined) {
+    return {
+      kind: "usage-error",
+      message: "prose --list cannot be combined with --section.",
+    };
+  }
+
+  if (filePaths.length !== 1) {
+    return {
+      kind: "usage-error",
+      message: "prose requires exactly one DESIGN.md file path.",
+    };
+  }
+
+  const command: ProseCommand = {
+    kind: "prose",
+    filePath: filePaths[0] ?? "",
+    list,
+  };
+
+  if (section !== undefined) {
+    command.section = section;
+  }
+
+  return command;
 }
 
 function parseSpecArgs(args: readonly string[]): CliCommand {
@@ -283,6 +367,7 @@ Usage:
   designmd lint [--strict] <file>
   designmd export --format css|css-tailwind [--out <file>] [--force] <file>
   designmd migrate [--write] <file>
+  designmd prose [--list|--section <name>] <file>
   designmd spec [--agent]
   designmd --help
   designmd --version
@@ -291,6 +376,7 @@ Commands:
   lint      Validate a DESIGN.md file
   export    Export DESIGN.md tokens to CSS files
   migrate   Convert legacy frontmatter DESIGN.md files
+  prose     Print DESIGN.md prose with YAML token fences removed
   spec      Print the DESIGN.md specification
 
 Options:
@@ -299,6 +385,8 @@ Options:
   --out <file>    Override export output path
   --force         Overwrite existing export output
   --write         Update the migrated input file in place
+  --list          List H2 sections available for prose extraction
+  --section       Print prose for one exact H2 section name
   --agent         Print compact agent-oriented spec
 `;
 }

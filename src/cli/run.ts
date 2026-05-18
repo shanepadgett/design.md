@@ -3,6 +3,7 @@ import { helpText, parseCliArgs } from "./args.js";
 import { runExportCommand } from "./commands/export.js";
 import { runLintCommand } from "./commands/lint.js";
 import { runMigrateCommand } from "./commands/migrate.js";
+import { runProseCommand } from "./commands/prose.js";
 import { runSpecCommand } from "./commands/spec.js";
 import type { CommandIO } from "./io.js";
 
@@ -31,6 +32,8 @@ export async function runCli(args: readonly string[], io: CliIO): Promise<number
       return runExportCommand(command, io);
     case "migrate":
       return runMigrateCommand(command, io);
+    case "prose":
+      return runProseCommand(command, io);
     case "spec":
       return runSpecCommand(command, io);
   }

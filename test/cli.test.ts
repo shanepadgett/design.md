@@ -138,6 +138,10 @@ test("CLI help and usage errors cover command option parsing", async () => {
   assert.equal(await runCli(["migrate", "-h"], migrateHelp.io), 0);
   assert.match(migrateHelp.output().stdout, /designmd migrate/);
 
+  const proseHelp = createIo({});
+  assert.equal(await runCli(["prose", "-h"], proseHelp.io), 0);
+  assert.match(proseHelp.output().stdout, /designmd prose/);
+
   const specHelp = createIo({});
   assert.equal(await runCli(["spec", "-h"], specHelp.io), 0);
   assert.match(specHelp.output().stdout, /designmd spec/);
@@ -156,6 +160,10 @@ test("CLI help and usage errors cover command option parsing", async () => {
     2,
   );
   assert.match(unknownMigrateOption.output().stderr, /Unknown migrate option '--out'/);
+
+  const unknownProseOption = createIo({});
+  assert.equal(await runCli(["prose", "--json", "DESIGN.md"], unknownProseOption.io), 2);
+  assert.match(unknownProseOption.output().stderr, /Unknown prose option '--json'/);
 
   const unknownSpecOption = createIo({});
   assert.equal(await runCli(["spec", "--json"], unknownSpecOption.io), 2);
@@ -178,6 +186,65 @@ test("CLI help and usage errors cover command option parsing", async () => {
     tooManyMigrateFiles.output().stderr,
     /migrate requires exactly one legacy DESIGN\.md file path/,
   );
+
+  const missingProseSection = createIo({});
+  assert.equal(await runCli(["prose", "--section"], missingProseSection.io), 2);
+  assert.match(missingProseSection.output().stderr, /prose --section requires a section name/);
+
+  const proseListSection = createIo({});
+  assert.equal(
+    await runCli(["prose", "--list", "--section", "Colors", "DESIGN.md"], proseListSection.io),
+    2,
+  );
+  assert.match(proseListSection.output().stderr, /prose --list cannot be combined/);
+});
+
+test("CLI prose prints markdown without yaml fences", async () => {
+  const source = `${validDesignMd.trimEnd()}
+
+## Implementation Notes
+
+Use this section for app-specific guidance.
+
+\`\`\`ts
+const keep = true;
+\`\`\`
+`;
+  const harness = createIo({ "DESIGN.md": source });
+
+  const exitCode = await runCli(["prose", "DESIGN.md"], harness.io);
+  const output = harness.output();
+
+  assert.equal(exitCode, 0);
+  assert.match(output.stdout, /^# Acme Design/);
+  assert.match(output.stdout, /## Colors[\s\S]*Use primary for the main action/);
+  assert.match(output.stdout, /## Implementation Notes[\s\S]*const keep = true;/);
+  assert.doesNotMatch(output.stdout, /```yaml/);
+  assert.doesNotMatch(output.stdout, /primary: "#1A1C1E"/);
+  assert.equal(output.stderr, "");
+});
+
+test("CLI prose lists and targets H2 sections", async () => {
+  const source = `${validDesignMd.trimEnd()}
+
+## Product Voice
+
+Use direct product copy.
+`;
+  const listed = createIo({ "DESIGN.md": source });
+  assert.equal(await runCli(["prose", "--list", "DESIGN.md"], listed.io), 0);
+  assert.match(
+    listed.output().stdout,
+    /^Overview\nColors\nTypography\nLayout\nElevation\nShapes\nProduct Voice\n$/,
+  );
+
+  const targeted = createIo({ "DESIGN.md": source });
+  assert.equal(await runCli(["prose", "--section", "Product Voice", "DESIGN.md"], targeted.io), 0);
+  assert.equal(targeted.output().stdout, "## Product Voice\n\nUse direct product copy.\n");
+
+  const missing = createIo({ "DESIGN.md": source });
+  assert.equal(await runCli(["prose", "--section", "Missing", "DESIGN.md"], missing.io), 1);
+  assert.match(missing.output().stderr, /section-not-found Missing/);
 });
 
 test("CLI spec prints human and agent specs", async () => {

@@ -8,8 +8,17 @@ export type {
   DesignMdMigrateResult,
   DesignMdOptions,
   DesignMdParseResult,
+  DesignMdProseOptions,
+  DesignMdProseResult,
+  DesignMdProseSection,
 } from "./core/pipeline.js";
-export { exportDesignMd, lintDesignMd, migrateDesignMd, parseDesignMd } from "./core/pipeline.js";
+export {
+  exportDesignMd,
+  extractDesignMdProse,
+  lintDesignMd,
+  migrateDesignMd,
+  parseDesignMd,
+} from "./core/pipeline.js";
 
 export type { DesignMdExportFormat } from "./core/export/css.js";
 
